@@ -4,7 +4,7 @@
   <name>rov_control</name>
   <version>0.1.0</version>
   <description>BlueROV2 control nodes</description>
-  <maintainer email="rov@rov">ROV</maintainer>
+  <maintainer email="wanghaojiehero@qq.com">ROV</maintainer>
   <license>MIT</license>
 
   <exec_depend>rclpy</exec_depend>

@@ -16,14 +16,14 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='ROV',
-    maintainer_email='rov@rov',
+    maintainer='oneBuYi',
+    maintainer_email='wanghaojiehero@qq.com',
     description='BlueROV2 control nodes',
     license='MIT',
     entry_points={
         'console_scripts': [
-            'depth_ctrl = rov_control.depth_ctrl_node:main',
-            'adhesion = rov_control.adhesion_ctrl_node:main',
+            'depth_ctrl_node = rov_control.depth_ctrl_node:main',
+            'adhesion_ctrl_node = rov_control.adhesion_ctrl_node:main',
         ],
     },
 )
