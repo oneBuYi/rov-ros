@@ -40,11 +40,9 @@
 
 ```
 rov_ros/src/
-├── rov_bringup/              # 功能包（配置）
+├── rov_bringup/              # 功能包（launch 文件）
 │   ├── launch/
 │   │   └── depth_control.launch.py
-│   ├── config/
-│   │   └── depth_params.yaml
 │   └── package.xml
 │
 ├── rov_msgs/                 # 功能包（自定义消息）
@@ -59,11 +57,13 @@ rov_ros/src/
     │   ├── pid.py            # 离散 PID 模块（纯 Python）
     │   ├── depth_ctrl_node.py
     │   └── adhesion_ctrl_node.py
+    ├── config/
+    │   └── depth_params.yaml # PID 参数（随节点包管理）
     ├── package.xml
     └── setup.py
 ```
 
-共 3 个功能包：`rov_bringup`（配置）、`rov_msgs`（消息定义）、`rov_control`（代码 + 节点）。
+共 3 个功能包：`rov_bringup`（launch 文件）、`rov_msgs`（消息定义）、`rov_control`（代码 + 参数 + 节点）。
 
 ## 数据流
 
