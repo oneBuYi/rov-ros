@@ -1,0 +1,8 @@
+rov_depth_ctrl:
+  ros__parameters:
+    kp: 100.0
+    ki: 40.0
+    kd: 80.0
+    out_min: -100.0
+    out_max: 100.0
+    control_rate: 10.0
