@@ -70,7 +70,7 @@ rov_ros/src/
 ```
 【水下 Jetson Nano】
   mavros（已运行）
-    /mavros/global_position/global  ──┐
+    /mavros/global_position/rel_alt   ──┐
     /mavros/manual_control/control  ←─┼─── 订阅
                                        │
   rov_depth_ctrl                       │
