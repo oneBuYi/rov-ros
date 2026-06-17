@@ -9,24 +9,24 @@ from mavros_msgs.msg import ManualControl
 
 class RovAdhesionCtrlNode(Node):
     def __init__(self):
-        super().__init__('rov_adhesion_ctrl')
+        super().__init__('adhesion_ctrl', namespace='rov')
 
         self._vertical_cmd = 0.0
         self._cb_group = MutuallyExclusiveCallbackGroup()
 
         self._sub = self.create_subscription(
-            Float32, '/rov/depth/vertical_cmd',
+            Float32, '/rov/depth_ctrl/vertical_cmd',
             self._vertical_cmd_callback, 10)
 
         self._pub = self.create_publisher(
             ManualControl, '/mavros/manual_control/control', 10)
 
         self._srv_toggle = self.create_service(
-            Trigger, '/rov/adhesion/toggle_depth',
+            Trigger, 'adhesion_ctrl/toggle_depth',
             self._toggle_depth_cb, callback_group=self._cb_group)
 
         self._depth_hold_client = self.create_client(
-            Trigger, '/rov/depth/hold', callback_group=self._cb_group)
+            Trigger, 'depth_ctrl/hold', callback_group=self._cb_group)
 
         self.get_logger().info('rov_adhesion_ctrl started')
 
