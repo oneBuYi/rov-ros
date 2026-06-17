@@ -1,4 +1,4 @@
-rov_depth_ctrl:
+rov/depth_ctrl:
   ros__parameters:
     kp: 100.0
     ki: 40.0

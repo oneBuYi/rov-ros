@@ -13,16 +13,18 @@ def generate_launch_description():
 
     depth_ctrl_node = Node(
         package='rov_control',
-        executable='depth_ctrl',
-        name='rov_depth_ctrl',
+        executable='depth_ctrl_node',
+        name='depth_ctrl',
+        namespace='rov',
         parameters=[config],
         output='screen',
     )
 
     adhesion_ctrl_node = Node(
         package='rov_control',
-        executable='adhesion',
-        name='rov_adhesion_ctrl',
+        executable='adhesion_ctrl_node',
+        name='adhesion_ctrl',
+        namespace='rov',
         output='screen',
     )
 

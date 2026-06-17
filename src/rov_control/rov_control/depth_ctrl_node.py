@@ -10,7 +10,7 @@ from rov_control.pid import PID
 
 class RovDepthCtrlNode(Node):
     def __init__(self):
-        super().__init__('rov_depth_ctrl')
+        super().__init__('depth_ctrl', namespace='rov')
 
         self.declare_parameters(
             namespace='',
@@ -43,14 +43,14 @@ class RovDepthCtrlNode(Node):
             self._depth_callback, 10)
 
         self._pub = self.create_publisher(
-            Float32, '/rov/depth/vertical_cmd', 10)
+            Float32, 'depth_ctrl/vertical_cmd', 10)
 
         self._srv_set_target = self.create_service(
-            SetTarget, '/rov/depth/set_target',
+            SetTarget, 'depth_ctrl/set_target',
             self._set_target_cb, callback_group=self._cb_group)
 
         self._srv_hold = self.create_service(
-            Trigger, '/rov/depth/hold',
+            Trigger, 'depth_ctrl/hold',
             self._hold_cb, callback_group=self._cb_group)
 
         rate = self.get_parameter('control_rate').value
@@ -71,7 +71,7 @@ class RovDepthCtrlNode(Node):
 
     def _set_target_cb(self, request, response):
         self._target = request.target
-        self._pid.reset()
+        # self._pid.reset()
         self._enabled = True
         response.success = True
         response.message = f'Target depth set to {request.target:.2f}m, hold enabled'
