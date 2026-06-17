@@ -19,7 +19,7 @@ class RovAdhesionCtrlNode(Node):
             self._vertical_cmd_callback, 10)
 
         self._pub = self.create_publisher(
-            ManualControl, '/mavros/manual_control/control', 10)
+            ManualControl, '/mavros/manual_control/send', 10)
 
         self._srv_toggle = self.create_service(
             Trigger, 'adhesion_ctrl/toggle_depth',
