@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
-from std_msgs.msg import Float64, Float32
+from std_msgs.msg import Float64, Float32, Bool
 from std_srvs.srv import Trigger
 from rov_msgs.srv import SetTarget
 from rov_control.pid import PID
@@ -53,6 +53,9 @@ class RovDepthCtrlNode(Node):
             Trigger, 'depth_ctrl/hold',
             self._hold_cb, callback_group=self._cb_group)
 
+        self._status_pub = self.create_publisher(
+            Bool, 'depth_ctrl/status', 10)
+
         rate = self.get_parameter('control_rate').value
         self._timer = self.create_timer(1.0 / rate, self._control_loop)
 
@@ -80,6 +83,9 @@ class RovDepthCtrlNode(Node):
 
     def _hold_cb(self, request, response):
         self._enabled = not self._enabled
+        msg = Bool()
+        msg.data = self._enabled
+        self._status_pub.publish(msg)
         self._pid.reset()
         if self._enabled:
             self._target = self._current_depth
