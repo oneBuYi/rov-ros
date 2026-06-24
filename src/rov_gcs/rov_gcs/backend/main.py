@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 import asyncio
 import logging
+import os
 import time
 from contextlib import asynccontextmanager
 from typing import Optional
 
 import uvicorn
+from ament_index_python.packages import get_package_share_directory
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .rosbridge import RosbridgeClient
 from .routes import router
@@ -184,6 +187,16 @@ app.add_middleware(
 
 app.include_router(router)
 app.add_api_websocket_route("/ws", ws_endpoint)
+
+# Mount frontend static files
+_frontend_dist = os.path.join(
+    get_package_share_directory("rov_gcs"), "frontend", "dist"
+)
+if os.path.isdir(_frontend_dist):
+    app.mount(
+        "/", StaticFiles(directory=_frontend_dist, html=True), name="static"
+    )
+    logger.info(f"Serving frontend from {_frontend_dist}")
 
 
 def main():
