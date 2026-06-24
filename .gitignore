@@ -9,12 +9,24 @@ build/
 install/
 log/
 
+# Node / Frontend
+node_modules/
+.npm/
+package-lock.json
+
 # IDE
 .vscode/
 .idea/
 .claude/
 
+# Editor
+*~
+*.swp
+*.swo
+
 # OS
 .DS_Store
 Thumbs.db
-node_modules/
+
+# Misc
+*.log
