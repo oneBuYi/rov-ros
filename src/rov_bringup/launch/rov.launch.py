@@ -13,6 +13,20 @@ def generate_launch_description():
         output='screen',
     )
 
+    depth_ctrl_node = Node(
+        package='rov_control',
+        executable='depth_ctrl_node',
+        output='screen',
+    )
+
+    adhesion_ctrl_node = Node(
+        package='rov_control',
+        executable='adhesion_ctrl_node',
+        output='screen',
+    )
+
     return LaunchDescription([
         mavros_node,
+        depth_ctrl_node,
+        adhesion_ctrl_node,
     ])
