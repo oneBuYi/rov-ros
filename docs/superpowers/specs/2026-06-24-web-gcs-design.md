@@ -174,7 +174,7 @@ WS /ws/joystick
 
 ### 5.1 depth_ctrl_node 改造
 
-新增 publish `/rov/depth_ctrl/hold_status`（Bool），每次 hold 切换时发布：
+新增 publish `/rov/depth_ctrl/status`（Bool），每次 hold 切换时发布：
 
 ```python
 # 新增 publisher
@@ -190,12 +190,12 @@ self._hold_status_pub.publish(msg)
 
 ### 5.2 adhesion_ctrl_node 改造
 
-新增订阅 `/rov/joystick/cmd`（手柄数据）和 `/rov/depth_ctrl/hold_status`（定深状态），合并逻辑：
+新增订阅 `/rov/joystick/cmd`（手柄数据）和 `/rov/depth_ctrl/status`（定深状态），合并逻辑：
 
 ```
 新增订阅:
   - /rov/joystick/cmd              (ManualControl, 来自手柄)
-  - /rov/depth_ctrl/hold_status    (Bool, 来自 depth_ctrl)
+  - /rov/depth_ctrl/status    (Bool, 来自 depth_ctrl)
 已有订阅:
   - /rov/depth_ctrl/vertical_cmd   (Float32, 来自 depth_ctrl)
 
