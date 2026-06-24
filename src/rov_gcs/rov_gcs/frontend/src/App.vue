@@ -1,17 +1,20 @@
 <template>
   <div id="gcs-app">
     <StatusBar
-      :ros-connected="t.ros_connected"
-      :hold-enabled="t.hold_enabled"
+      :ros-connected="store.telemetry.ros_connected"
+      :hold-enabled="store.telemetry.hold_enabled"
     />
     <div class="dashboard">
-      <DepthGauge :depth="t.depth" :target-depth="t.target_depth" />
+      <DepthGauge
+        :depth="store.telemetry.depth"
+        :target-depth="store.telemetry.target_depth"
+      />
       <VideoPlaceholder />
       <TelemetryPanel
-        :lat="t.lat"
-        :lon="t.lon"
-        :yaw="t.yaw"
-        :vertical-cmd="t.vertical_cmd"
+        :lat="store.telemetry.lat"
+        :lon="store.telemetry.lon"
+        :yaw="store.telemetry.yaw"
+        :vertical-cmd="store.telemetry.vertical_cmd"
       />
     </div>
     <ControlPanel :gamepad-connected="gamepadConnected" />
@@ -19,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import StatusBar from './components/StatusBar.vue'
 import DepthGauge from './components/DepthGauge.vue'
 import VideoPlaceholder from './components/VideoPlaceholder.vue'
@@ -30,7 +33,6 @@ import { useGamepad } from './composables/useGamepad'
 import { useTelemetryStore } from './stores/telemetry'
 
 const store = useTelemetryStore()
-const t = computed(() => store.telemetry.value)
 const gamepadConnected = ref(false)
 
 const wsUrl = `ws://${window.location.host}/ws`
@@ -43,15 +45,19 @@ const { connect, close, send } = useWebSocket(wsUrl)
 
 onMounted(() => {
   connect()
-  const gamepad = useGamepad({
-    onData: (data) => {
-      send({ type: 'joystick', data })
-    },
-    onConnect: (v) => {
-      gamepadConnected.value = v
-    },
-  })
-  gamepad.start()
+  try {
+    const gamepad = useGamepad({
+      onData: (data) => {
+        send({ type: 'joystick', data })
+      },
+      onConnect: (v) => {
+        gamepadConnected.value = v
+      },
+    })
+    gamepad.start()
+  } catch (e) {
+    console.warn('Gamepad API unavailable:', e)
+  }
 })
 
 onUnmounted(() => close())

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { reactive, toRefs } from 'vue'
+import { ref } from 'vue'
 
 export interface Telemetry {
   depth: number
@@ -12,8 +12,8 @@ export interface Telemetry {
   ros_connected: boolean
 }
 
-function defaultTelemetry(): Telemetry {
-  return {
+export const useTelemetryStore = defineStore('telemetry', () => {
+  const telemetry = ref<Telemetry>({
     depth: 0,
     target_depth: 0,
     hold_enabled: false,
@@ -22,25 +22,15 @@ function defaultTelemetry(): Telemetry {
     lon: 0,
     yaw: 0,
     ros_connected: false,
-  }
-}
-
-export const useTelemetryStore = defineStore('telemetry', () => {
-  const state = reactive<{ telemetry: Telemetry }>({
-    telemetry: defaultTelemetry(),
   })
 
   function updateTelemetry(data: Partial<Telemetry>) {
-    Object.assign(state.telemetry, data)
+    Object.assign(telemetry.value, data)
   }
 
   function setRosConnected(v: boolean) {
-    state.telemetry.ros_connected = v
+    telemetry.value.ros_connected = v
   }
 
-  return {
-    ...toRefs(state),
-    updateTelemetry,
-    setRosConnected,
-  }
+  return { telemetry, updateTelemetry, setRosConnected }
 })
