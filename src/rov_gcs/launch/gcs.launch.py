@@ -3,17 +3,18 @@ import sys
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess, LogInfo, RegisterEventHandler
 from launch.event_handlers import OnProcessExit
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    # rosbridge_server
-    rosbridge = ExecuteProcess(
-        cmd=[
-            'ros2', 'run', 'rosbridge_server', 'rosbridge_websocket',
-            '--ros-args',
-            '-p', 'port:=9090',
-            '-p', 'address:=0.0.0.0',
-        ],
+    # rosbridge_server — ROS ↔ 非 ROS 世界的桥梁
+    rosbridge = Node(
+        package='rosbridge_server',
+        executable='rosbridge_websocket',
+        parameters=[{
+            'port': 9090,
+            'address': '0.0.0.0',
+        }],
         output='screen',
     )
 
