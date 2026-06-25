@@ -65,12 +65,12 @@ def on_yaw_pwm(msg: dict):
 
 
 def on_depth_hold_status(msg: dict):
-    """/rov/depth_ctrl/status -> depth hold state."""
+    """/rov/depth_ctrl/status_hold -> depth hold state."""
     store.update(depth_hold_enabled=bool(msg.get("data", False)))
 
 
 def on_heading_hold_status(msg: dict):
-    """/rov/heading_ctrl/status -> heading hold state."""
+    """/rov/heading_ctrl/status_hold -> heading hold state."""
     store.update(heading_hold_enabled=bool(msg.get("data", False)))
 
 
@@ -171,7 +171,7 @@ async def lifespan(app: FastAPI):
         on_vertical_pwm,
     )
     await _rosbridge.subscribe(
-        "/rov/depth_ctrl/status",
+        "/rov/depth_ctrl/status_hold",
         "std_msgs/msg/Bool",
         on_depth_hold_status,
     )
@@ -181,7 +181,7 @@ async def lifespan(app: FastAPI):
         on_yaw_pwm,
     )
     await _rosbridge.subscribe(
-        "/rov/heading_ctrl/status",
+        "/rov/heading_ctrl/status_hold",
         "std_msgs/msg/Bool",
         on_heading_hold_status,
     )
@@ -233,7 +233,7 @@ _frontend_dist = os.path.join(
 )
 if os.path.isdir(_frontend_dist):
     app.mount(
-        "/", StaticFiles(directory=_frontend_dist, html=True), name="static"
+        "/", StaticFiles(directory=_frontend_dist, html=True, follow_symlink=True), name="static"
     )
     logger.info(f"Serving frontend from {_frontend_dist}")
 

@@ -54,7 +54,7 @@ class RovDepthCtrlNode(Node):
             self._hold_cb, callback_group=self._cb_group)
 
         self._status_pub = self.create_publisher(
-            Bool, 'depth_ctrl/status', 10)
+            Bool, 'depth_ctrl/status_hold', 10)
 
         rate = self.get_parameter('control_rate').value
         self._timer = self.create_timer(1.0 / rate, self._control_loop)

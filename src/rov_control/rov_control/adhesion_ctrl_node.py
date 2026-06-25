@@ -40,7 +40,7 @@ class RovAdhesionCtrlNode(Node):
             self._on_vertical_pwm, 10)
 
         self._sub_depth_hold = self.create_subscription(
-            Bool, '/rov/depth_ctrl/status',
+            Bool, '/rov/depth_ctrl/status_hold',
             self._on_depth_hold_status, 10)
 
         # --- heading hold inputs ---
@@ -49,7 +49,7 @@ class RovAdhesionCtrlNode(Node):
             self._on_yaw_pwm, 10)
 
         self._sub_heading_hold = self.create_subscription(
-            Bool, '/rov/heading_ctrl/status',
+            Bool, '/rov/heading_ctrl/status_hold',
             self._on_heading_hold_status, 10)
 
         # --- joystick input ---

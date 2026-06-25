@@ -59,25 +59,29 @@ class RosbridgeClient:
     async def subscribe(
         self, topic: str, msg_type: str, callback: Callable[[dict], None]
     ) -> str:
-        """Subscribe to a ROS topic. Returns subscription ID."""
-        sub_id = f"sub_{topic}_{id(callback)}"
+        """Subscribe to a ROS topic. Returns the topic (used as subscription ID).
+
+        Note: rosbridge publish messages do NOT include the subscription ``id``
+        field; they use ``topic`` to identify the source.  We therefore key
+        callbacks by topic name rather than the client-generated sub_id.
+        """
         async with self._lock:
-            self._callbacks[sub_id] = callback
+            self._callbacks[topic] = callback
             msg = {
                 "op": "subscribe",
-                "id": sub_id,
+                "id": topic,
                 "topic": topic,
                 "type": msg_type,
             }
             await self._ws.send(json.dumps(msg))
         logger.info(f"Subscribed to {topic} ({msg_type})")
-        return sub_id
+        return topic
 
-    async def unsubscribe(self, sub_id: str) -> None:
-        """Cancel a subscription."""
+    async def unsubscribe(self, topic: str) -> None:
+        """Cancel a subscription by topic name."""
         async with self._lock:
-            self._callbacks.pop(sub_id, None)
-            msg = {"op": "unsubscribe", "id": sub_id}
+            self._callbacks.pop(topic, None)
+            msg = {"op": "unsubscribe", "id": topic, "topic": topic}
             await self._ws.send(json.dumps(msg))
 
     async def publish(
@@ -130,9 +134,11 @@ class RosbridgeClient:
 
                 op = msg.get("op")
                 if op == "publish":
-                    sub_id = msg.get("id", "")
+                    # rosbridge publish messages use "topic" rather than "id"
+                    # to identify the source subscription.
+                    topic = msg.get("topic", "")
                     data = msg.get("msg", {})
-                    cb = self._callbacks.get(sub_id)
+                    cb = self._callbacks.get(topic)
                     if cb:
                         cb(data)
 
@@ -140,8 +146,12 @@ class RosbridgeClient:
                     call_id = msg.get("id", "")
                     future = self._pending_services.pop(call_id, None)
                     if future and not future.done():
-                        values = msg.get("values", {})
-                        future.set_result(values)
+                        if msg.get("result") is False:
+                            error_msg = msg.get("values", "Unknown service error")
+                            future.set_exception(RuntimeError(str(error_msg)))
+                        else:
+                            values = msg.get("values", {})
+                            future.set_result(values)
 
                 elif op == "status":
                     level = msg.get("level", "info")
