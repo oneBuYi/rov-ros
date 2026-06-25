@@ -104,8 +104,12 @@ class RovAdhesionCtrlNode(Node):
         self._heading_hold_enabled = msg.data
         self._publish_merged()
 
-    # Scale factor: internal range ±100 → MAVLink range ±1000
+    # MAVLink ManualControl scaling:
+    # x, y, r: ±1000 range (SCALE=10 maps internal ±100 → ±1000)
+    # z (throttle): 0-1000 range, 500=neutral, 0=full down, 1000=full up
     SCALE = 10.0
+    Z_SCALE = 5.0
+    Z_OFFSET = 500.0
 
     def _publish_merged(self):
         manual = ManualControl()
@@ -115,7 +119,7 @@ class RovAdhesionCtrlNode(Node):
             float(self._vertical_pwm)
             if self._depth_hold_enabled
             else float(self._joystick_z)
-        ) * self.SCALE
+        ) * self.Z_SCALE + self.Z_OFFSET
         manual.r = (
             float(self._yaw_pwm)
             if self._heading_hold_enabled

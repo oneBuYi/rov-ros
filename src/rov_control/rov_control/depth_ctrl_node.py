@@ -68,8 +68,11 @@ class RovDepthCtrlNode(Node):
         if not self._enabled:
             return
         output = self._pid.update(self._target, self._current_depth)
+        # PID error = target - current. When current > target (too deep),
+        # error is negative. ArduSub ManualControl z maps 0=down, 500=neutral,
+        # 1000=up. Negate so that too-deep → positive cmd → z > 500 → ascend.
         cmd = Float32()
-        cmd.data = float(output)
+        cmd.data = float(-output)
         self._pub.publish(cmd)
 
     def _set_target_cb(self, request, response):
