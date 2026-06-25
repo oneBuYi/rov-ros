@@ -26,10 +26,10 @@ class RovAdhesionCtrlNode(Node):
 
         self._vertical_pwm = 0.0
         self._yaw_pwm = 0.0
-        self._joystick_x = 0
-        self._joystick_y = 0
-        self._joystick_z = 0
-        self._joystick_r = 0
+        self._joystick_x = 0.0
+        self._joystick_y = 0.0
+        self._joystick_z = 0.0
+        self._joystick_r = 0.0
         self._depth_hold_enabled = False
         self._heading_hold_enabled = False
         self._cb_group = MutuallyExclusiveCallbackGroup()
@@ -88,10 +88,10 @@ class RovAdhesionCtrlNode(Node):
         self._publish_merged()
 
     def _on_joystick_cmd(self, msg):
-        self._joystick_x = int(msg.x)
-        self._joystick_y = int(msg.y)
-        self._joystick_z = int(msg.z)
-        self._joystick_r = int(msg.r)
+        self._joystick_x = float(msg.x)
+        self._joystick_y = float(msg.y)
+        self._joystick_z = float(msg.z)
+        self._joystick_r = float(msg.r)
         self._publish_merged()
 
     def _on_depth_hold_status(self, msg):
