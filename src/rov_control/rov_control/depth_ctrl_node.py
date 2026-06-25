@@ -74,8 +74,11 @@ class RovDepthCtrlNode(Node):
 
     def _set_target_cb(self, request, response):
         self._target = request.target
-        # self._pid.reset()
         self._enabled = True
+        self._pid.reset()
+        msg = Bool()
+        msg.data = self._enabled
+        self._status_pub.publish(msg)
         response.success = True
         response.message = f'Target depth set to {request.target:.2f}m, hold enabled'
         self.get_logger().info(response.message)

@@ -102,6 +102,10 @@ class RovHeadingCtrlNode(Node):
         # 将目标角度归一化到 [0, 360)
         self._target = target % 360.0
         self._enabled = True
+        self._pid.reset()
+        msg = Bool()
+        msg.data = self._enabled
+        self._status_pub.publish(msg)
         response.success = True
         response.message = (
             f'Target heading set to {self._target:.1f}°, hold enabled'
