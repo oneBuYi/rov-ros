@@ -9,6 +9,8 @@ def generate_launch_description():
         parameters=[{
             'fcu_url': '/dev/pixhawk:115200',
             'gcs_url': 'udp-b://@0.0.0.0:14551',
+            'system_id': 255,
+            'component_id': 190,
         }],
         output='screen',
     )
