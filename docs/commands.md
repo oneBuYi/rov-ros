@@ -20,7 +20,7 @@ cd /home/jetson/whj/rov-ros
 colcon build --packages-select rov_gcs
 
 # 构建所有包
-colcon build --symlink-install
+rm -rf build/ install/ log/ && colcon build --symlink-install
 
 # 构建指定包
 colcon build --packages-select rov_msgs

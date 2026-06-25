@@ -13,8 +13,12 @@
       <span class="value">{{ yaw.toFixed(1) }}°</span>
     </div>
     <div class="telem-item">
-      <span class="label">PID 输出</span>
+      <span class="label">深度 PID</span>
       <span class="value">{{ verticalPwm.toFixed(1) }}</span>
+    </div>
+    <div class="telem-item">
+      <span class="label">航向 PID</span>
+      <span class="value">{{ yawPwm.toFixed(1) }}</span>
     </div>
   </div>
 </template>
@@ -25,6 +29,7 @@ defineProps<{
   lon: number
   yaw: number
   verticalPwm: number
+  yawPwm: number
 }>()
 </script>
 

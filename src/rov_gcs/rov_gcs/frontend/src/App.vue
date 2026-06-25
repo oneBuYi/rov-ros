@@ -15,6 +15,7 @@
         :lon="store.telemetry.lon"
         :yaw="store.telemetry.yaw"
         :vertical-pwm="store.telemetry.vertical_pwm"
+        :yaw-pwm="store.telemetry.yaw_pwm"
       />
     </div>
     <ControlPanel :gamepad-connected="gamepadConnected" />

@@ -101,8 +101,11 @@ class RovHeadingCtrlNode(Node):
         target = request.target
         # 将目标角度归一化到 [0, 360)
         self._target = target % 360.0
+        # Only reset PID if hold was previously disabled — avoids a
+        # gratuitous 0-output cycle when simply changing the target.
+        if not self._enabled:
+            self._pid.reset()
         self._enabled = True
-        self._pid.reset()
         msg = Bool()
         msg.data = self._enabled
         self._status_pub.publish(msg)

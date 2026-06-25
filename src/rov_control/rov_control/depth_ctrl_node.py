@@ -74,8 +74,11 @@ class RovDepthCtrlNode(Node):
 
     def _set_target_cb(self, request, response):
         self._target = request.target
+        # Only reset PID if hold was previously disabled — avoids a
+        # gratuitous 0-output cycle when simply changing the target.
+        if not self._enabled:
+            self._pid.reset()
         self._enabled = True
-        self._pid.reset()
         msg = Bool()
         msg.data = self._enabled
         self._status_pub.publish(msg)
