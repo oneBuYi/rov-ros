@@ -1,28 +1,55 @@
 <template>
   <div class="control-panel">
-    <div class="depth-control">
+    <!-- 深度控制 -->
+    <div class="ctrl-group">
       <label>目标深度 (m)</label>
       <div class="input-row">
         <input
-          v-model.number="targetInput"
+          v-model.number="depthTargetInput"
           type="number"
           step="0.1"
           min="0"
           placeholder="输入深度"
-          @keyup.enter="handleSetTarget"
+          @keyup.enter="handleSetDepthTarget"
         />
-        <button :disabled="sending" @click="handleSetTarget">设定</button>
+        <button :disabled="sending" @click="handleSetDepthTarget">设定</button>
       </div>
       <p v-if="error" class="error">{{ error }}</p>
     </div>
     <button
       class="hold-btn"
-      :class="holdEnabled ? 'active' : ''"
+      :class="depthHoldEnabled ? 'active' : ''"
       :disabled="sending"
-      @click="handleHold"
+      @click="handleDepthHold"
     >
-      {{ holdEnabled ? '关闭定深' : '开启定深' }}
+      {{ depthHoldEnabled ? '关闭定深' : '开启定深' }}
     </button>
+
+    <!-- 航向控制 -->
+    <div class="ctrl-group">
+      <label>目标航向 (°)</label>
+      <div class="input-row">
+        <input
+          v-model.number="headingTargetInput"
+          type="number"
+          step="1"
+          min="0"
+          max="360"
+          placeholder="输入航向"
+          @keyup.enter="handleSetHeadingTarget"
+        />
+        <button :disabled="sending" @click="handleSetHeadingTarget">设定</button>
+      </div>
+    </div>
+    <button
+      class="hold-btn"
+      :class="headingHoldEnabled ? 'active' : ''"
+      :disabled="sending"
+      @click="handleHeadingHold"
+    >
+      {{ headingHoldEnabled ? '关闭定航' : '开启定航' }}
+    </button>
+
     <div class="gamepad-status">
       🎮 {{ gamepadConnected ? '手柄已连接' : '手柄未连接' }}
     </div>
@@ -36,22 +63,31 @@ import { useTelemetryStore } from '../stores/telemetry'
 
 const props = defineProps<{ gamepadConnected: boolean }>()
 const store = useTelemetryStore()
-const { setTarget, toggleHold } = useApi()
-const targetInput = ref(0)
+const { setDepthTarget, toggleDepthHold, setHeadingTarget, toggleHeadingHold } =
+  useApi()
+const depthTargetInput = ref(0)
+const headingTargetInput = ref(0)
 const sending = ref(false)
 const error = ref('')
 
-const holdEnabled = computed(() => store.telemetry.value.hold_enabled)
+const depthHoldEnabled = computed(
+  () => store.telemetry.value.depth_hold_enabled
+)
+const headingHoldEnabled = computed(
+  () => store.telemetry.value.heading_hold_enabled
+)
 
-async function handleSetTarget() {
+// ----- depth -----
+
+async function handleSetDepthTarget() {
   error.value = ''
-  if (targetInput.value < 0) {
+  if (depthTargetInput.value < 0) {
     error.value = '深度不能为负数'
     return
   }
   sending.value = true
   try {
-    await setTarget(targetInput.value)
+    await setDepthTarget(depthTargetInput.value)
   } catch (e: any) {
     error.value = e.message || '设定失败'
   } finally {
@@ -59,11 +95,37 @@ async function handleSetTarget() {
   }
 }
 
-async function handleHold() {
+async function handleDepthHold() {
   error.value = ''
   sending.value = true
   try {
-    await toggleHold()
+    await toggleDepthHold()
+  } catch (e: any) {
+    error.value = e.message || '操作失败'
+  } finally {
+    sending.value = false
+  }
+}
+
+// ----- heading -----
+
+async function handleSetHeadingTarget() {
+  error.value = ''
+  sending.value = true
+  try {
+    await setHeadingTarget(headingTargetInput.value)
+  } catch (e: any) {
+    error.value = e.message || '设定失败'
+  } finally {
+    sending.value = false
+  }
+}
+
+async function handleHeadingHold() {
+  error.value = ''
+  sending.value = true
+  try {
+    await toggleHeadingHold()
   } catch (e: any) {
     error.value = e.message || '操作失败'
   } finally {
@@ -81,13 +143,12 @@ async function handleHold() {
   background: #141924;
   border-top: 1px solid #2a3040;
 }
-.depth-control {
+.ctrl-group {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1;
 }
-.depth-control label {
+.ctrl-group label {
   color: #8899aa;
   font-size: 13px;
   white-space: nowrap;

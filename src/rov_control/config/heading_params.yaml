@@ -1,0 +1,8 @@
+rov/heading_ctrl:
+  ros__parameters:
+    kp: 80.0
+    ki: 20.0
+    kd: 40.0
+    out_min: -100.0
+    out_max: 100.0
+    control_rate: 10.0

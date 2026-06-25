@@ -55,8 +55,23 @@ def on_compass_hdg(msg: dict):
 
 
 def on_vertical_pwm(msg: dict):
-    """/rov/depth_ctrl/vertical_pwm -> PID output."""
+    """/rov/depth_ctrl/pid_output -> PID output."""
     store.update(vertical_pwm=round(msg.get("data", 0.0), 2))
+
+
+def on_yaw_pwm(msg: dict):
+    """/rov/heading_ctrl/pid_output -> PID output."""
+    store.update(yaw_pwm=round(msg.get("data", 0.0), 2))
+
+
+def on_depth_hold_status(msg: dict):
+    """/rov/depth_ctrl/status -> depth hold state."""
+    store.update(depth_hold_enabled=bool(msg.get("data", False)))
+
+
+def on_heading_hold_status(msg: dict):
+    """/rov/heading_ctrl/status -> heading hold state."""
+    store.update(heading_hold_enabled=bool(msg.get("data", False)))
 
 
 # ----- joystick publisher -----
@@ -151,9 +166,24 @@ async def lifespan(app: FastAPI):
         on_compass_hdg,
     )
     await _rosbridge.subscribe(
-        "/rov/depth_ctrl/vertical_pwm",
+        "/rov/depth_ctrl/pid_output",
         "std_msgs/msg/Float32",
         on_vertical_pwm,
+    )
+    await _rosbridge.subscribe(
+        "/rov/depth_ctrl/status",
+        "std_msgs/msg/Bool",
+        on_depth_hold_status,
+    )
+    await _rosbridge.subscribe(
+        "/rov/heading_ctrl/pid_output",
+        "std_msgs/msg/Float32",
+        on_yaw_pwm,
+    )
+    await _rosbridge.subscribe(
+        "/rov/heading_ctrl/status",
+        "std_msgs/msg/Bool",
+        on_heading_hold_status,
     )
 
     store.update(ros_connected=True)

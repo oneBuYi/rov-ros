@@ -4,8 +4,11 @@ import { ref } from 'vue'
 export interface Telemetry {
   depth: number
   target_depth: number
-  hold_enabled: boolean
+  depth_hold_enabled: boolean
   vertical_pwm: number
+  target_heading: number
+  heading_hold_enabled: boolean
+  yaw_pwm: number
   lat: number
   lon: number
   yaw: number
@@ -16,8 +19,11 @@ export const useTelemetryStore = defineStore('telemetry', () => {
   const telemetry = ref<Telemetry>({
     depth: 0,
     target_depth: 0,
-    hold_enabled: false,
+    depth_hold_enabled: false,
     vertical_pwm: 0,
+    target_heading: 0,
+    heading_hold_enabled: false,
+    yaw_pwm: 0,
     lat: 0,
     lon: 0,
     yaw: 0,

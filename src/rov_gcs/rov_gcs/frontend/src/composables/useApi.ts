@@ -18,21 +18,43 @@ async function request(method: string, path: string, body?: unknown) {
 export function useApi() {
   const store = useTelemetryStore()
 
-  async function setTarget(target: number) {
+  // ----- depth control -----
+
+  async function setDepthTarget(target: number) {
     if (target < 0) throw new Error('target depth must be >= 0')
     const result = await request('POST', '/depth/set_target', { target })
-    store.updateTelemetry({ target_depth: target, hold_enabled: true })
+    store.updateTelemetry({ target_depth: target, depth_hold_enabled: true })
     return result
   }
 
-  async function toggleHold() {
+  async function toggleDepthHold() {
     const result = await request('POST', '/depth/hold')
     if (result.message) {
       const enabled = result.message.toLowerCase().includes('enabled')
-      store.updateTelemetry({ hold_enabled: enabled })
+      store.updateTelemetry({ depth_hold_enabled: enabled })
     }
     return result
   }
 
-  return { setTarget, toggleHold }
+  // ----- heading control -----
+
+  async function setHeadingTarget(target: number) {
+    const result = await request('POST', '/heading/set_target', { target })
+    store.updateTelemetry({
+      target_heading: target % 360,
+      heading_hold_enabled: true,
+    })
+    return result
+  }
+
+  async function toggleHeadingHold() {
+    const result = await request('POST', '/heading/hold')
+    if (result.message) {
+      const enabled = result.message.toLowerCase().includes('enabled')
+      store.updateTelemetry({ heading_hold_enabled: enabled })
+    }
+    return result
+  }
+
+  return { setDepthTarget, toggleDepthHold, setHeadingTarget, toggleHeadingHold }
 }

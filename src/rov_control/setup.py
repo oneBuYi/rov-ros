@@ -3,6 +3,7 @@ import os
 from glob import glob
 
 package_name = 'rov_control'
+pkg_dir = os.path.dirname(__file__)
 
 setup(
     name=package_name,
@@ -12,7 +13,8 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
+        (os.path.join('share', package_name, 'config'),
+         glob(os.path.join(pkg_dir, 'config', '*.yaml'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -23,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'depth_ctrl_node = rov_control.depth_ctrl_node:main',
+            'heading_ctrl_node = rov_control.heading_ctrl_node:main',
             'adhesion_ctrl_node = rov_control.adhesion_ctrl_node:main',
         ],
     },
