@@ -43,18 +43,18 @@ class RovDepthCtrlNode(Node):
             self._depth_callback, 10)
 
         self._pub = self.create_publisher(
-            Float32, 'depth_ctrl/vertical_cmd', 10)
+            Float32, 'depth_ctrl/vertical_pwm', 10)
 
         self._srv_set_target = self.create_service(
             SetTarget, 'depth_ctrl/set_target',
             self._set_target_cb, callback_group=self._cb_group)
 
         self._srv_hold = self.create_service(
-            Trigger, 'depth_ctrl/hold',
+            Trigger, 'depth_ctrl/toggle_hold',
             self._hold_cb, callback_group=self._cb_group)
 
         self._status_pub = self.create_publisher(
-            Bool, 'depth_ctrl/status', 10)
+            Bool, 'depth_ctrl/get_status', 10)
 
         rate = self.get_parameter('control_rate').value
         self._timer = self.create_timer(1.0 / rate, self._control_loop)

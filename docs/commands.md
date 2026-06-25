@@ -62,8 +62,8 @@ ros2 topic list
 
 # 查看话题内容
 ros2 topic echo /mavros/global_position/rel_alt
-ros2 topic echo /rov/depth_ctrl/vertical_cmd
-ros2 topic echo /rov/depth_ctrl/status
+ros2 topic echo /rov/depth_ctrl/vertical_pwm
+ros2 topic echo /rov/depth_ctrl/get_status
 ros2 topic echo /rov/joystick/cmd
 ros2 topic echo /mavros/manual_control/send
 
@@ -74,7 +74,7 @@ ros2 service list
 ros2 service call /rov/depth_ctrl/set_target rov_msgs/srv/SetTarget "{target: 2.0}"
 
 # 切换深度保持
-ros2 service call /rov/depth_ctrl/hold std_srvs/srv/Trigger
+ros2 service call /rov/depth_ctrl/toggle_hold std_srvs/srv/Trigger
 
 # 通过 adhesion_ctrl 切换深度保持
 ros2 service call /rov/adhesion_ctrl/toggle_depth std_srvs/srv/Trigger

@@ -5,7 +5,7 @@ export interface Telemetry {
   depth: number
   target_depth: number
   hold_enabled: boolean
-  vertical_cmd: number
+  vertical_pwm: number
   lat: number
   lon: number
   yaw: number
@@ -17,7 +17,7 @@ export const useTelemetryStore = defineStore('telemetry', () => {
     depth: 0,
     target_depth: 0,
     hold_enabled: false,
-    vertical_cmd: 0,
+    vertical_pwm: 0,
     lat: 0,
     lon: 0,
     yaw: 0,

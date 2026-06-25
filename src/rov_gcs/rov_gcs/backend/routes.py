@@ -50,7 +50,7 @@ async def toggle_hold():
 
     try:
         result = await rb.call_service(
-            service="/rov/depth_ctrl/hold",
+            service="/rov/depth_ctrl/toggle_hold",
             args={},
         )
         success = result.get("success", False)

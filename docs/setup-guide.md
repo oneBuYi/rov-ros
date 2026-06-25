@@ -32,7 +32,7 @@
 ```
 Pixhawk/ArduSub → MAVROS → /mavros/global_position/rel_alt（高度）
     → RovDepthCtrlNode（PID 控制器，10 Hz）
-    → /rov/depth_ctrl/vertical_cmd（垂直推力指令）
+    → /rov/depth_ctrl/vertical_pwm（垂直推力指令）
     → RovAdhesionCtrlNode（桥接节点）
     → /mavros/manual_control/send（ManualControl.z）
     → MAVROS → Pixhawk → 电机

@@ -14,7 +14,7 @@
     </div>
     <div class="telem-item">
       <span class="label">PID 输出</span>
-      <span class="value">{{ verticalCmd.toFixed(1) }}</span>
+      <span class="value">{{ verticalPwm.toFixed(1) }}</span>
     </div>
   </div>
 </template>
@@ -24,7 +24,7 @@ defineProps<{
   lat: number
   lon: number
   yaw: number
-  verticalCmd: number
+  verticalPwm: number
 }>()
 </script>
 

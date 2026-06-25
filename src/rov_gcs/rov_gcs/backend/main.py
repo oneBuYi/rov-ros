@@ -37,7 +37,8 @@ def get_rosbridge() -> Optional[RosbridgeClient]:
 def on_rel_alt(msg: dict):
     """/mavros/global_position/rel_alt -> depth (negated)."""
     alt = msg.get("data", 0.0)
-    store.update(depth=round(-alt, 2))
+    depth = round(-alt, 2)
+    store.update(depth=depth)
 
 
 def on_global_position(msg: dict):
@@ -53,9 +54,9 @@ def on_compass_hdg(msg: dict):
     store.update(yaw=round(msg.get("data", 0.0), 2))
 
 
-def on_vertical_cmd(msg: dict):
-    """/rov/depth_ctrl/vertical_cmd -> PID output."""
-    store.update(vertical_cmd=round(msg.get("data", 0.0), 2))
+def on_vertical_pwm(msg: dict):
+    """/rov/depth_ctrl/vertical_pwm -> PID output."""
+    store.update(vertical_pwm=round(msg.get("data", 0.0), 2))
 
 
 # ----- joystick publisher -----
@@ -125,26 +126,34 @@ async def lifespan(app: FastAPI):
             )
             await asyncio.sleep(2.0)
 
-    # Subscribe to telemetry topics
+    # Wait for MAVROS publishers to come online before subscribing.
+    # rosbridge determines subscriber QoS based on existing publishers at
+    # subscription time. MAVROS uses BEST_EFFORT reliability; if we subscribe
+    # before MAVROS starts publishing, rosbridge defaults to RELIABLE and
+    # message delivery fails due to ROS2 QoS incompatibility.
+    logger.info("Waiting for MAVROS publishers to come online...")
+    await asyncio.sleep(5.0)
+
+    # Subscribe to telemetry topics (ROS2 type names for correctness)
     await _rosbridge.subscribe(
         "/mavros/global_position/rel_alt",
-        "std_msgs/Float64",
+        "std_msgs/msg/Float64",
         on_rel_alt,
     )
     await _rosbridge.subscribe(
         "/mavros/global_position/global",
-        "sensor_msgs/NavSatFix",
+        "sensor_msgs/msg/NavSatFix",
         on_global_position,
     )
     await _rosbridge.subscribe(
         "/mavros/global_position/compass_hdg",
-        "std_msgs/Float64",
+        "std_msgs/msg/Float64",
         on_compass_hdg,
     )
     await _rosbridge.subscribe(
-        "/rov/depth_ctrl/vertical_cmd",
-        "std_msgs/Float32",
-        on_vertical_cmd,
+        "/rov/depth_ctrl/vertical_pwm",
+        "std_msgs/msg/Float32",
+        on_vertical_pwm,
     )
 
     store.update(ros_connected=True)

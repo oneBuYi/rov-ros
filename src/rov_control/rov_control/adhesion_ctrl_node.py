@@ -11,7 +11,7 @@ class RovAdhesionCtrlNode(Node):
     def __init__(self):
         super().__init__('adhesion_ctrl', namespace='rov')
 
-        self._vertical_cmd = 0.0
+        self._vertical_pwm = 0.0
         self._joystick_x = 0
         self._joystick_y = 0
         self._joystick_z = 0
@@ -20,15 +20,15 @@ class RovAdhesionCtrlNode(Node):
         self._cb_group = MutuallyExclusiveCallbackGroup()
 
         self._sub_vertical = self.create_subscription(
-            Float32, '/rov/depth_ctrl/vertical_cmd',
-            self._on_vertical_cmd, 10)
+            Float32, '/rov/depth_ctrl/vertical_pwm',
+            self._on_vertical_pwm, 10)
 
         self._sub_joystick = self.create_subscription(
             ManualControl, '/rov/joystick/cmd',
             self._on_joystick_cmd, 10)
 
         self._sub_hold_status = self.create_subscription(
-            Bool, '/rov/depth_ctrl/status',
+            Bool, '/rov/depth_ctrl/get_status',
             self._on_hold_status, 10)
 
         self._pub = self.create_publisher(
@@ -39,12 +39,12 @@ class RovAdhesionCtrlNode(Node):
             self._toggle_depth_cb, callback_group=self._cb_group)
 
         self._depth_hold_client = self.create_client(
-            Trigger, 'depth_ctrl/hold', callback_group=self._cb_group)
+            Trigger, 'depth_ctrl/toggle_hold', callback_group=self._cb_group)
 
         self.get_logger().info('rov_adhesion_ctrl started')
 
-    def _on_vertical_cmd(self, msg):
-        self._vertical_cmd = msg.data
+    def _on_vertical_pwm(self, msg):
+        self._vertical_pwm = msg.data
         self._publish_merged()
 
     def _on_joystick_cmd(self, msg):
@@ -64,7 +64,7 @@ class RovAdhesionCtrlNode(Node):
         manual.y = self._joystick_y
         manual.r = self._joystick_r
         manual.z = (
-            float(self._vertical_cmd)
+            float(self._vertical_pwm)
             if self._hold_enabled
             else float(self._joystick_z)
         )

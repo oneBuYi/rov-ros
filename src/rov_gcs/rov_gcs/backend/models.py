@@ -5,7 +5,7 @@ class Telemetry(BaseModel):
     depth: float = 0.0              # current depth (m), positive = underwater
     target_depth: float = 0.0       # target depth
     hold_enabled: bool = False      # depth hold toggle
-    vertical_cmd: float = 0.0       # PID output
+    vertical_pwm: float = 0.0       # PID vertical thrust output
     lat: float = 0.0                # latitude
     lon: float = 0.0                # longitude
     yaw: float = 0.0                # heading (degrees)
