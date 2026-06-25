@@ -110,7 +110,7 @@ async def joystick_publisher():
 
         try:
             await rb.publish(
-                topic="/rov/joystick/cmd",
+                topic="/rov/joystick_ctrl/cmd",
                 msg_type="mavros_msgs/ManualControl",
                 msg=msg,
             )

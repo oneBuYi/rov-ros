@@ -54,7 +54,7 @@ class RovAdhesionCtrlNode(Node):
 
         # --- joystick input ---
         self._sub_joystick = self.create_subscription(
-            ManualControl, '/rov/joystick/cmd',
+            ManualControl, '/rov/joystick_ctrl/cmd',
             self._on_joystick_cmd, 10)
 
         # --- merged output ---
