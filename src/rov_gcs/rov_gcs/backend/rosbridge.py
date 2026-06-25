@@ -92,6 +92,7 @@ class RosbridgeClient:
             payload = {
                 "op": "publish",
                 "topic": topic,
+                "type": msg_type,
                 "msg": msg,
             }
             await self._ws.send(json.dumps(payload))

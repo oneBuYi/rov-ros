@@ -99,13 +99,22 @@ async def joystick_publisher():
         now = time.time()
         if data is None or now - last_time > 0.5:
             # Timeout: send zero commands to stop ROV
-            msg = {"x": 0, "y": 0, "z": 0, "r": 0}
+            msg = {"x": 0, "y": 0, "z": 0, "r": 0, "buttons": 0}
         else:
+            buttons = data.get("buttons", [])
+            # mavros_msgs/ManualControl buttons is uint16 bitmask.
+            # Frontend sends an array of 0/1; pack into bitmask.
+            btn_list = [int(b) for b in (buttons if isinstance(buttons, list) else [])]
+            btn_mask = 0
+            for i, b in enumerate(btn_list):
+                if b:
+                    btn_mask |= 1 << i
             msg = {
                 "x": int(data.get("x", 0)),
                 "y": int(data.get("y", 0)),
                 "z": int(data.get("z", 0)),
                 "r": int(data.get("r", 0)),
+                "buttons": btn_mask,
             }
 
         try:

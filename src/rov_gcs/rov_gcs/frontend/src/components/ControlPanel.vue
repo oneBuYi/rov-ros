@@ -50,8 +50,19 @@
       {{ headingHoldEnabled ? '关闭定航' : '开启定航' }}
     </button>
 
+    <!-- Arm/Disarm -->
+    <button
+      class="arm-btn"
+      :class="armed ? 'armed' : 'disarmed'"
+      :disabled="sending"
+      @click="handleArmToggle"
+    >
+      {{ armed ? '🔴 Disarm' : '🟢 Arm' }}
+    </button>
+
     <div class="gamepad-status">
-      🎮 {{ gamepadConnected ? '手柄已连接' : '手柄未连接' }}
+      <template v-if="gamepadConnected">🎮 手柄已连接</template>
+      <template v-else>🎮 按手柄任意键激活</template>
     </div>
   </div>
 </template>
@@ -63,18 +74,19 @@ import { useTelemetryStore } from '../stores/telemetry'
 
 const props = defineProps<{ gamepadConnected: boolean }>()
 const store = useTelemetryStore()
-const { setDepthTarget, toggleDepthHold, setHeadingTarget, toggleHeadingHold } =
+const { setDepthTarget, toggleDepthHold, setHeadingTarget, toggleHeadingHold, arm, disarm } =
   useApi()
 const depthTargetInput = ref(0)
 const headingTargetInput = ref(0)
 const sending = ref(false)
 const error = ref('')
+const armed = ref(false)
 
 const depthHoldEnabled = computed(
-  () => store.telemetry.value.depth_hold_enabled
+  () => store.telemetry.depth_hold_enabled
 )
 const headingHoldEnabled = computed(
-  () => store.telemetry.value.heading_hold_enabled
+  () => store.telemetry.heading_hold_enabled
 )
 
 // ----- depth -----
@@ -100,6 +112,26 @@ async function handleDepthHold() {
   sending.value = true
   try {
     await toggleDepthHold()
+  } catch (e: any) {
+    error.value = e.message || '操作失败'
+  } finally {
+    sending.value = false
+  }
+}
+
+// ----- arm/disarm -----
+
+async function handleArmToggle() {
+  error.value = ''
+  sending.value = true
+  try {
+    if (armed.value) {
+      await disarm()
+      armed.value = false
+    } else {
+      await arm()
+      armed.value = true
+    }
   } catch (e: any) {
     error.value = e.message || '操作失败'
   } finally {
@@ -137,8 +169,9 @@ async function handleHeadingHold() {
 <style scoped>
 .control-panel {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
+  gap: 12px 16px;
   padding: 10px 16px;
   background: #141924;
   border-top: 1px solid #2a3040;
@@ -196,6 +229,19 @@ button:disabled {
   color: #ff6b6b;
   font-size: 12px;
   margin-left: 8px;
+}
+.arm-btn {
+  background: #2a3040;
+  color: #8899aa;
+  font-weight: 600;
+}
+.arm-btn.armed {
+  background: #ff6b6b33;
+  color: #ff6b6b;
+}
+.arm-btn.disarmed {
+  background: #4caf5033;
+  color: #4caf50;
 }
 .gamepad-status {
   margin-left: auto;

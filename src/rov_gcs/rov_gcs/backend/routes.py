@@ -114,3 +114,47 @@ async def toggle_heading_hold():
         return ApiResponse(success=success, message=message)
     except RuntimeError as e:
         raise HTTPException(status_code=504, detail=str(e))
+
+
+# ----- arm/disarm -----
+
+@router.post("/arm", response_model=ApiResponse)
+async def arm():
+    """Arm the vehicle via MAVROS."""
+    from .main import get_rosbridge
+
+    rb = get_rosbridge()
+    if not rb or not rb.connected:
+        raise HTTPException(status_code=503, detail="ROS not connected")
+
+    try:
+        result = await rb.call_service(
+            service="/mavros/cmd/arming",
+            args={"value": True},
+        )
+        success = result.get("success", False)
+        message = result.get("message", "Arm command sent")
+        return ApiResponse(success=success, message=message)
+    except RuntimeError as e:
+        raise HTTPException(status_code=504, detail=str(e))
+
+
+@router.post("/disarm", response_model=ApiResponse)
+async def disarm():
+    """Disarm the vehicle via MAVROS."""
+    from .main import get_rosbridge
+
+    rb = get_rosbridge()
+    if not rb or not rb.connected:
+        raise HTTPException(status_code=503, detail="ROS not connected")
+
+    try:
+        result = await rb.call_service(
+            service="/mavros/cmd/arming",
+            args={"value": False},
+        )
+        success = result.get("success", False)
+        message = result.get("message", "Disarm command sent")
+        return ApiResponse(success=success, message=message)
+    except RuntimeError as e:
+        raise HTTPException(status_code=504, detail=str(e))

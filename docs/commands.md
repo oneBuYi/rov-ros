@@ -11,13 +11,16 @@ source install/setup.bash
 
 ```bash
 # 构建前端（如修改了 Vue 代码）
+# 注意：npm run build 生成带哈希的文件名，必须再执行 colcon build
+# 才能将新的 JS/CSS 文件同步到 install 目录，否则页面会空白
 cd src/rov_gcs/rov_gcs/frontend
 npm install --registry=https://registry.npmmirror.com
 npm run build
 cd /home/jetson/whj/rov-ros
+colcon build --packages-select rov_gcs
 
 # 构建所有包
-colcon build
+colcon build --symlink-install
 
 # 构建指定包
 colcon build --packages-select rov_msgs
@@ -64,6 +67,8 @@ ros2 topic list
 ros2 topic echo /mavros/global_position/rel_alt
 ros2 topic echo /rov/depth_ctrl/vertical_pwm
 ros2 topic echo /rov/depth_ctrl/get_status
+ros2 topic echo /rov/heading_ctrl/pid_output
+ros2 topic echo /rov/heading_ctrl/status_hold
 ros2 topic echo /rov/joystick/cmd
 ros2 topic echo /mavros/manual_control/send
 
@@ -78,6 +83,12 @@ ros2 service call /rov/depth_ctrl/toggle_hold std_srvs/srv/Trigger
 
 # 通过 adhesion_ctrl 切换深度保持
 ros2 service call /rov/adhesion_ctrl/toggle_depth std_srvs/srv/Trigger
+
+# 设定航向目标（单位：度）
+ros2 service call /rov/heading_ctrl/set_target rov_msgs/srv/SetTarget "{target: 180.0}"
+
+# 切换航向保持
+ros2 service call /rov/heading_ctrl/toggle_hold std_srvs/srv/Trigger
 ```
 
 ## Web API
@@ -93,6 +104,14 @@ curl -X POST http://localhost:8000/api/depth/set_target \
 
 # 切换定深
 curl -X POST http://localhost:8000/api/depth/hold
+
+# 设定目标航向
+curl -X POST http://localhost:8000/api/heading/set_target \
+  -H 'Content-Type: application/json' \
+  -d '{"target": 180}'
+
+# 切换定航
+curl -X POST http://localhost:8000/api/heading/hold
 
 # WebSocket 测试（需安装 wscat: npm i -g wscat）
 wscat -c ws://localhost:8000/ws

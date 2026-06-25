@@ -24,7 +24,7 @@ def generate_launch_description():
         executable='heading_ctrl_node',
         output='screen',
     )
-    
+
     adhesion_ctrl_node = Node(
         package='rov_control',
         executable='adhesion_ctrl_node',

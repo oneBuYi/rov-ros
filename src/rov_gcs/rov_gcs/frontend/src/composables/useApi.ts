@@ -56,5 +56,15 @@ export function useApi() {
     return result
   }
 
-  return { setDepthTarget, toggleDepthHold, setHeadingTarget, toggleHeadingHold }
+  // ----- arm/disarm -----
+
+  async function arm() {
+    return request('POST', '/arm')
+  }
+
+  async function disarm() {
+    return request('POST', '/disarm')
+  }
+
+  return { setDepthTarget, toggleDepthHold, setHeadingTarget, toggleHeadingHold, arm, disarm }
 }

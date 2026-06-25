@@ -30,6 +30,7 @@ class RovAdhesionCtrlNode(Node):
         self._joystick_y = 0.0
         self._joystick_z = 0.0
         self._joystick_r = 0.0
+        self._joystick_buttons = 0
         self._depth_hold_enabled = False
         self._heading_hold_enabled = False
         self._cb_group = MutuallyExclusiveCallbackGroup()
@@ -92,6 +93,7 @@ class RovAdhesionCtrlNode(Node):
         self._joystick_y = float(msg.y)
         self._joystick_z = float(msg.z)
         self._joystick_r = float(msg.r)
+        self._joystick_buttons = int(msg.buttons)
         self._publish_merged()
 
     def _on_depth_hold_status(self, msg):
@@ -102,20 +104,24 @@ class RovAdhesionCtrlNode(Node):
         self._heading_hold_enabled = msg.data
         self._publish_merged()
 
+    # Scale factor: internal range ±100 → MAVLink range ±1000
+    SCALE = 10.0
+
     def _publish_merged(self):
         manual = ManualControl()
-        manual.x = self._joystick_x
-        manual.y = self._joystick_y
+        manual.x = self._joystick_x * self.SCALE
+        manual.y = self._joystick_y * self.SCALE
         manual.z = (
             float(self._vertical_pwm)
             if self._depth_hold_enabled
             else float(self._joystick_z)
-        )
+        ) * self.SCALE
         manual.r = (
             float(self._yaw_pwm)
             if self._heading_hold_enabled
             else float(self._joystick_r)
-        )
+        ) * self.SCALE
+        manual.buttons = self._joystick_buttons
         self._pub.publish(manual)
 
     # ----- toggle depth (existing) -----

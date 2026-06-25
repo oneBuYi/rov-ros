@@ -2,7 +2,7 @@
   <div id="gcs-app">
     <StatusBar
       :ros-connected="store.telemetry.ros_connected"
-      :hold-enabled="store.telemetry.hold_enabled"
+      :hold-enabled="store.telemetry.depth_hold_enabled || store.telemetry.heading_hold_enabled"
     />
     <div class="dashboard">
       <DepthGauge
@@ -70,9 +70,12 @@ onUnmounted(() => close())
   height: 100vh;
   max-width: 960px;
   margin: 0 auto;
+  overflow: hidden;
 }
 .dashboard {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
