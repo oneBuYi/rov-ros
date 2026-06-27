@@ -94,16 +94,13 @@ ros2 service call /rov/heading_ctrl/toggle_hold std_srvs/srv/Trigger
 
 ### UDP 视频流接收
 
-# GStreamer 接收（PC 端，需 GStreamer 1.0+）
-gst-launch-1.0 udpsrc port=5600 caps="application/x-rtp,media=video,payload=96,clock-rate=90000,encoding-name=H264" ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink
+# GStreamer 接收（PC 端，需要 GStreamer）
+gst-launch-1.0 udpsrc port=5600 ! multipartdemux ! jpegdec ! videoconvert ! autovideosink
 
 # 或通过 OpenCV + GStreamer 后端接收
 python3 -c "
 import cv2
-pipeline = (
-    'udpsrc port=5600 caps=\"application/x-rtp,media=video,payload=96,clock-rate=90000,encoding-name=H264\" ! '
-    'rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! appsink'
-)
+pipeline = 'udpsrc port=5600 ! multipartdemux ! jpegdec ! videoconvert ! appsink'
 cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
 while True:
     ret, frame = cap.read()
