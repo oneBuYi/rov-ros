@@ -92,12 +92,23 @@ ros2 service call /rov/heading_ctrl/set_target rov_msgs/srv/SetTarget "{target: 
 ros2 service call /rov/heading_ctrl/toggle_hold std_srvs/srv/Trigger
 ```
 
-### UDP 视频流接收
+### 运行相机发布节点（MJPEG）
 
-# GStreamer 接收（PC 端，需要 GStreamer）
+```bash
+# 默认配置（/dev/video0, 640x480, 15fps）
+ros2 run rov_sensor camera_pub_node
+
+# 指定设备和 UDP 转发（MJPEG 裸流）
+ros2 run rov_sensor camera_pub_node --ros-args -p gcs_url:=udp://192.168.1.100:5600
+```
+
+### MJPEG UDP 视频流接收（与 camera_pub_node 配合）
+
+```bash
+# GStreamer 接收（PC 端）
 gst-launch-1.0 udpsrc port=5600 ! multipartdemux ! jpegdec ! videoconvert ! autovideosink
 
-# 或通过 OpenCV + GStreamer 后端接收
+# OpenCV + GStreamer 后端接收
 python3 -c "
 import cv2
 pipeline = 'udpsrc port=5600 ! multipartdemux ! jpegdec ! videoconvert ! appsink'
@@ -111,6 +122,69 @@ while True:
 cap.release()
 cv2.destroyAllWindows()
 "
+```
+
+### 运行 H.264 UDP 转发节点
+
+```bash
+# 默认配置（/dev/video1, 640x480, 15fps, → 192.168.3.11:5600）
+ros2 run rov_sensor h264_udp_node
+
+# 自定义目标地址和端口
+ros2 run rov_sensor h264_udp_node --ros-args -p host:=192.168.1.100 -p port:=5000
+
+# 自定义分辨率和帧率
+ros2 run rov_sensor h264_udp_node --ros-args -p width:=1920 -p height:=1080 -p framerate:=30
+
+# 组合自定义参数
+ros2 run rov_sensor h264_udp_node --ros-args \
+  -p device:=/dev/video1 \
+  -p width:=1280 -p height:=720 -p framerate:=25 \
+  -p host:=192.168.3.11 -p port:=5600
+```
+
+### H.264 RTP 视频流接收（与 h264_udp_node 配合）
+
+```bash
+# GStreamer 接收（PC 端）
+gst-launch-1.0 udpsrc port=5600 \
+  caps="application/x-rtp,media=video,payload=96,encoding-name=H264" ! \
+  rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink
+
+# OpenCV + GStreamer 后端接收
+python3 -c "
+import cv2
+pipeline = (
+    'udpsrc port=5600 '
+    'caps=\"application/x-rtp,media=video,payload=96,encoding-name=H264\" ! '
+    'rtph264depay ! h264parse ! avdec_h264 ! '
+    'videoconvert ! video/x-raw,format=BGR ! '
+    'appsink drop=true max-buffers=2'
+)
+cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
+if not cap.isOpened():
+    print('Failed to open UDP RTP stream')
+    exit(1)
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        continue
+    cv2.imshow('ROV H.264 Stream', frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+cap.release()
+cv2.destroyAllWindows()
+"
+
+# ffplay 接收（需先创建 SDP 文件 stream.sdp）
+cat > /tmp/stream.sdp << 'EOF'
+v=0
+m=video 5600 RTP/AVP 96
+c=IN IP4 0.0.0.0
+a=rtpmap:96 H264/90000
+EOF
+ffplay -protocol_whitelist file,udp,rtp /tmp/stream.sdp
+```
 
 ## Web API
 
