@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 import asyncio
+import base64
 import logging
 import os
 import time
 from contextlib import asynccontextmanager
 from typing import Optional
 
+import cv2
+import numpy as np
 import uvicorn
 from ament_index_python.packages import get_package_share_directory
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from .rosbridge import RosbridgeClient
@@ -26,10 +30,55 @@ logger = logging.getLogger("gcs_backend")
 _rosbridge: Optional[RosbridgeClient] = None
 _broadcast_task: Optional[asyncio.Task] = None
 _joystick_task: Optional[asyncio.Task] = None
+_reconnect_task: Optional[asyncio.Task] = None
 
 
 def get_rosbridge() -> Optional[RosbridgeClient]:
     return _rosbridge
+
+
+async def _subscribe_all(rb: RosbridgeClient) -> None:
+    """Subscribe to all telemetry and camera topics."""
+    await rb.subscribe(
+        "/mavros/global_position/rel_alt",
+        "std_msgs/msg/Float64",
+        on_rel_alt,
+    )
+    await rb.subscribe(
+        "/mavros/global_position/global",
+        "sensor_msgs/msg/NavSatFix",
+        on_global_position,
+    )
+    await rb.subscribe(
+        "/mavros/global_position/compass_hdg",
+        "std_msgs/msg/Float64",
+        on_compass_hdg,
+    )
+    await rb.subscribe(
+        "/rov/depth_ctrl/pid_output",
+        "std_msgs/msg/Float32",
+        on_vertical_pwm,
+    )
+    await rb.subscribe(
+        "/rov/depth_ctrl/status_hold",
+        "std_msgs/msg/Bool",
+        on_depth_hold_status,
+    )
+    await rb.subscribe(
+        "/rov/heading_ctrl/pid_output",
+        "std_msgs/msg/Float32",
+        on_yaw_pwm,
+    )
+    await rb.subscribe(
+        "/rov/heading_ctrl/status_hold",
+        "std_msgs/msg/Bool",
+        on_heading_hold_status,
+    )
+    await rb.subscribe(
+        "/rov/camera/image_raw",
+        "sensor_msgs/msg/Image",
+        on_camera_image,
+    )
 
 
 # ----- rosbridge topic callbacks -----
@@ -72,6 +121,37 @@ def on_depth_hold_status(msg: dict):
 def on_heading_hold_status(msg: dict):
     """/rov/heading_ctrl/status_hold -> heading hold state."""
     store.update(heading_hold_enabled=bool(msg.get("data", False)))
+
+
+def on_camera_image(msg: dict):
+    """/rov/camera/image_raw -> decode raw BGR, compress to JPEG, store."""
+    try:
+        data_b64 = msg.get("data", "")
+        if not data_b64:
+            return
+
+        raw = base64.b64decode(data_b64)
+        width = msg.get("width", 640)
+        height = msg.get("height", 480)
+        encoding = msg.get("encoding", "bgr8")
+
+        if encoding in ("bgr8", "rgb8"):
+            channels = 3
+        elif encoding == "mono8":
+            channels = 1
+        else:
+            logger.warning(f"Unsupported image encoding: {encoding}")
+            return
+
+        arr = np.frombuffer(raw, dtype=np.uint8).reshape((height, width, channels))
+
+        if encoding == "rgb8":
+            arr = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
+
+        _, jpeg = cv2.imencode(".jpg", arr, [cv2.IMWRITE_JPEG_QUALITY, 70])
+        store.latest_frame = jpeg.tobytes()
+    except Exception:
+        logger.exception("Failed to process camera image")
 
 
 # ----- joystick publisher -----
@@ -131,11 +211,12 @@ async def joystick_publisher():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _rosbridge, _broadcast_task, _joystick_task
+    global _rosbridge, _broadcast_task, _joystick_task, _reconnect_task
 
     # Startup
     logger.info("Starting GCS backend...")
     _rosbridge = RosbridgeClient("ws://localhost:9090")
+    _rosbridge._on_disconnect = lambda: store.update(ros_connected=False)
 
     # Connect to rosbridge with retry
     retry_count = 0
@@ -159,44 +240,27 @@ async def lifespan(app: FastAPI):
     await asyncio.sleep(5.0)
 
     # Subscribe to telemetry topics (ROS2 type names for correctness)
-    await _rosbridge.subscribe(
-        "/mavros/global_position/rel_alt",
-        "std_msgs/msg/Float64",
-        on_rel_alt,
-    )
-    await _rosbridge.subscribe(
-        "/mavros/global_position/global",
-        "sensor_msgs/msg/NavSatFix",
-        on_global_position,
-    )
-    await _rosbridge.subscribe(
-        "/mavros/global_position/compass_hdg",
-        "std_msgs/msg/Float64",
-        on_compass_hdg,
-    )
-    await _rosbridge.subscribe(
-        "/rov/depth_ctrl/pid_output",
-        "std_msgs/msg/Float32",
-        on_vertical_pwm,
-    )
-    await _rosbridge.subscribe(
-        "/rov/depth_ctrl/status_hold",
-        "std_msgs/msg/Bool",
-        on_depth_hold_status,
-    )
-    await _rosbridge.subscribe(
-        "/rov/heading_ctrl/pid_output",
-        "std_msgs/msg/Float32",
-        on_yaw_pwm,
-    )
-    await _rosbridge.subscribe(
-        "/rov/heading_ctrl/status_hold",
-        "std_msgs/msg/Bool",
-        on_heading_hold_status,
-    )
+    await _subscribe_all(_rosbridge)
 
     store.update(ros_connected=True)
     logger.info("All telemetry subscriptions active")
+
+    # Start reconnection watchdog
+    async def reconnect_watchdog():
+        while True:
+            await asyncio.sleep(3.0)
+            rb = get_rosbridge()
+            if rb and not rb.connected:
+                logger.warning("rosbridge disconnected, attempting reconnect...")
+                try:
+                    await rb.connect(retry=False)
+                    await _subscribe_all(rb)
+                    store.update(ros_connected=True)
+                    logger.info("Reconnected to rosbridge")
+                except Exception:
+                    logger.debug("rosbridge reconnection failed, will retry")
+
+    _reconnect_task = asyncio.create_task(reconnect_watchdog())
 
     # Start broadcast and joystick loops
     _broadcast_task = asyncio.create_task(store.run_broadcast_loop(0.1))
@@ -208,7 +272,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down GCS backend...")
     store.update(ros_connected=False)
 
-    for task in [_broadcast_task, _joystick_task]:
+    for task in [_broadcast_task, _joystick_task, _reconnect_task]:
         if task:
             task.cancel()
 
@@ -235,6 +299,26 @@ app.add_middleware(
 
 app.include_router(router)
 app.add_api_websocket_route("/ws", ws_endpoint)
+
+
+@app.get("/api/video/stream")
+async def video_stream():
+    """MJPEG video stream of /rov/camera/image_raw."""
+
+    async def generate():
+        while True:
+            frame = store.latest_frame
+            if frame is not None:
+                yield (
+                    b"--frame\r\n"
+                    b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
+                )
+            await asyncio.sleep(0.066)  # ~15 fps max
+
+    return StreamingResponse(
+        generate(),
+        media_type="multipart/x-mixed-replace; boundary=frame",
+    )
 
 # Mount frontend static files
 _frontend_dist = os.path.join(

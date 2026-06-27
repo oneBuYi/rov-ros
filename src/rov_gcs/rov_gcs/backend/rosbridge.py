@@ -7,6 +7,10 @@ import websockets
 
 logger = logging.getLogger(__name__)
 
+# Accept messages up to 10MB (camera frames are ~1.2MB raw base64).
+# Default websockets max_size is 1MB, which silently closes the connection.
+_WS_MAX_SIZE = 10 * 1024 * 1024
+
 
 class RosbridgeClient:
     def __init__(self, uri: str = "ws://localhost:9090"):
@@ -18,6 +22,7 @@ class RosbridgeClient:
         self._connected = False
         self._recv_task: Optional[asyncio.Task] = None
         self._lock = asyncio.Lock()
+        self._on_disconnect: Optional[Callable[[], None]] = None
 
     @property
     def connected(self) -> bool:
@@ -29,7 +34,7 @@ class RosbridgeClient:
         while True:
             try:
                 self._ws = await websockets.connect(
-                    self._uri, ping_interval=20
+                    self._uri, ping_interval=20, max_size=_WS_MAX_SIZE
                 )
                 self._connected = True
                 self._recv_task = asyncio.create_task(self._recv_loop())
@@ -165,3 +170,8 @@ class RosbridgeClient:
             logger.warning("rosbridge connection closed")
         finally:
             self._connected = False
+            if self._on_disconnect:
+                try:
+                    self._on_disconnect()
+                except Exception:
+                    logger.exception("on_disconnect callback failed")

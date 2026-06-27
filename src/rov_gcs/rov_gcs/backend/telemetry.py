@@ -17,6 +17,7 @@ class TelemetryStore:
         self._lock = asyncio.Lock()
         self._clients: set[WebSocket] = set()
         self.joystick_queue: asyncio.Queue = asyncio.Queue(maxsize=100)
+        self.latest_frame: bytes | None = None  # latest JPEG frame for MJPEG stream
 
     def update(self, **kwargs) -> None:
         """Update cached telemetry fields."""
