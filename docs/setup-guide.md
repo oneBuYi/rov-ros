@@ -9,10 +9,11 @@
 1. [硬件概述](#1-硬件概述)
 2. [Jetson Nano 系统安装](#2-jetson-nano-系统安装)
 3. [ROS2 Foxy 安装](#3-ros2-foxy-安装)
-4. [MAVROS 安装](#4-mavros-安装)
-5. [创建工作空间并克隆项目](#5-创建工作空间并克隆项目)
-6. [构建项目](#6-构建项目)
-7. [硬件连接](#7-硬件连接)
+4. [cv_bridge 编译安装](#4-cv_bridge-编译安装)
+5. [MAVROS 安装](#5-mavros-安装)
+6. [创建工作空间并克隆项目](#6-创建工作空间并克隆项目)
+7. [构建项目](#7-构建项目)
+8. [硬件连接](#8-硬件连接)
 
 ---
 
@@ -144,7 +145,117 @@ ros2 topic list
 
 ---
 
-## 4. MAVROS 安装
+## 4. cv_bridge 编译安装
+
+Jetson Nano 的 JetPack 自带 OpenCV 4.2.0（含 CUDA 优化），而 apt 安装的 ros-foxy-cv-bridge 链接的是标准 x86 编译的 OpenCV 版本，ABI 不兼容，需从源码编译。
+
+### 4.1 卸载 apt 版本
+
+```bash
+sudo apt remove ros-foxy-cv-bridge python3-cv-bridge
+```
+
+### 4.2 创建编译工作空间
+
+```bash
+mkdir -p ~/cv_bridge_ws/src
+cd ~/cv_bridge_ws/src
+git clone -b foxy https://github.com/ros-perception/vision_opencv.git
+```
+
+### 4.3 修复 OpenCV 4.x 兼容性问题
+
+问题一：`module_opencv3.cpp` 包含了 OpenCV 4 已移除的 C API 头文件：
+
+```bash
+nano ~/cv_bridge_ws/src/vision_opencv/cv_bridge/src/module_opencv3.cpp
+```
+
+找到：
+
+```cpp
+#include "opencv2/core/types_c.h"
+```
+
+改为：
+
+```cpp
+#if CV_VERSION_MAJOR < 4
+#include "opencv2/core/types_c.h"
+#endif
+```
+
+问题二：`module.hpp` 的 `import_array()` 在 Python3 下返回类型不兼容：
+
+```bash
+nano ~/cv_bridge_ws/src/vision_opencv/cv_bridge/src/module.hpp
+```
+
+找到：
+
+```cpp
+static void * do_numpy_import()
+{
+  import_array();
+  return nullptr;
+}
+```
+
+改为：
+
+```cpp
+static void do_numpy_import()
+{
+  if (_import_array() < 0) {
+    PyErr_Print();
+    PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
+  }
+}
+```
+
+### 4.4 编译安装
+
+```bash
+cd ~/cv_bridge_ws
+source /opt/ros/foxy/setup.bash
+
+colcon build \
+  --packages-select cv_bridge \
+  --cmake-args \
+    -DPYTHON_EXECUTABLE=/usr/bin/python3 \
+    -DOpenCV_DIR=/usr/lib/aarch64-linux-gnu/cmake/opencv4 \
+    -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON \
+    -DCMAKE_INSTALL_RPATH=/usr/lib/aarch64-linux-gnu
+```
+
+### 4.5 配置环境变量
+
+将以下内容添加到 `~/.bashrc`，注意顺序：
+
+```bash
+echo "export LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libGLdispatch.so.0:/usr/lib/aarch64-linux-gnu/libgomp.so.1" >> ~/.bashrc
+echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc
+echo "source ~/cv_bridge_ws/install/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+```
+
+说明：
+- `LD_PRELOAD` 预加载 `libGLdispatch.so.0` 和 `libgomp.so.1`，解决 ARM 平台 static TLS 空间不足的问题（NVIDIA GStreamer 插件如 nvv4l2decoder、nvvidconv 依赖这两个库，若未预加载会加载失败）
+- `cv_bridge_ws` 需在 ROS2 之后 source，overlay 机制会优先使用自编译版本
+
+### 4.6 验证
+
+```bash
+python3 -c "from cv_bridge import CvBridge; print('ok')"
+# 应输出 ok
+
+python3 -c "import cv_bridge; print(cv_bridge.__file__)"
+# 应显示 /home/jetson/cv_bridge_ws/install/... 而非 /opt/ros/foxy/...
+```
+
+---
+
+## 5. MAVROS 安装
 
 MAVROS 是 ROS 与 MAVLink 飞控（如 Pixhawk）之间的通信桥接包。
 
@@ -180,16 +291,16 @@ sudo bash ./install_geographiclib_datasets.sh
 
 ---
 
-## 5. 创建工作空间并克隆项目
+## 6. 创建工作空间并克隆项目
 
-### 5.1 创建工作空间目录
+### 6.1 创建工作空间目录
 
 ```bash
 mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws
 ```
 
-### 5.2 克隆项目
+### 6.2 克隆项目
 
 ```bash
 # 将项目代码克隆到 src 目录
@@ -212,7 +323,7 @@ git clone <your-repo-url> rov-ros
 
 > **说明**：本项目的三个 ROS 包（`rov_msgs`、`rov_control`、`rov_bringup`）均在 `rov-ros/src/` 目录下。构建时需确保 `colcon` 能发现这些包。
 
-### 5.3 设置软链接（推荐方式）
+### 6.3 设置软链接（推荐方式）
 
 为了让 colcon 能正确发现这些包，有两种方式：
 
@@ -236,7 +347,7 @@ ln -s rov-ros/src/rov_control src/
 ln -s rov-ros/src/rov_bringup src/
 ```
 
-### 5.4 安装 ROS 依赖
+### 6.4 安装 ROS 依赖
 
 ```bash
 cd ~/ros2_ws
@@ -245,9 +356,9 @@ rosdep install --from-paths src --ignore-src -r -y
 
 ---
 
-## 6. 构建项目
+## 7. 构建项目
 
-### 6.1 完整构建
+### 7.1 完整构建
 
 ```bash
 cd ~/ros2_ws
@@ -262,7 +373,7 @@ colcon build
 source install/setup.bash
 ```
 
-### 6.2 单独构建某个包
+### 7.2 单独构建某个包
 
 ```bash
 # 先构建消息包
@@ -275,7 +386,7 @@ colcon build --packages-select rov_control
 colcon build --packages-select rov_bringup
 ```
 
-### 6.3 清理并重新构建
+### 7.3 清理并重新构建
 
 ```bash
 rm -rf build/ install/ log/
@@ -285,9 +396,9 @@ source install/setup.bash
 
 ---
 
-## 7. 硬件连接
+## 8. 硬件连接
 
-### 7.1 Pixhawk 与 Jetson Nano 连接
+### 8.1 Pixhawk 与 Jetson Nano 连接
 
 Pixhawk 通过 **TELEM2** 串口连接至 Jetson Nano：
 
@@ -298,7 +409,7 @@ Pixhawk TELEM2       Jetson Nano（J41 排针）
   GND ─────────────────→  GND（Pin 6）
 ```
 
-### 7.2 配置串口设备
+### 8.2 配置串口设备
 
 ```bash
 # 查看串口设备
@@ -324,7 +435,7 @@ sudo usermod -a -G dialout $USER
 # 注销并重新登录使生效
 ```
 
-### 7.3 验证串口通信
+### 8.3 验证串口通信
 
 ```bash
 # 拔出再插入 Pixhawk USB 线，检查设备是否出现

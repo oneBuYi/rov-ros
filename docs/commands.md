@@ -48,13 +48,14 @@ ros2 run rosbridge_server rosbridge_websocket --ros-args -p port:=9090 -p addres
 ros2 run rov_control depth_ctrl_node
 ros2 run rov_control adhesion_ctrl_node
 ros2 run rov_gcs gcs_backend
+ros2 run rov_sensor camera_pub_node
 
 # 快速启动 Web 上位机（rosbridge + uvicorn，不使用 launch）
 ros2 run rosbridge_server rosbridge_websocket --ros-args -p port:=9090 -p address:=0.0.0.0 &
 python3 -m uvicorn rov_gcs.backend.main:app --host 0.0.0.0 --port 8000
 
 # 浏览器打开
-# http://<jetson-ip>:8000
+# http://192.168.137.72:8000
 ```
 
 ## 调试

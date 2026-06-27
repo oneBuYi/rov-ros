@@ -33,9 +33,16 @@ def generate_launch_description():
         output='screen',
     )
 
+    camera_pub_node = Node(
+        package='rov_sensor',
+        executable='camera_pub_node',
+        output='screen',
+    )
+
     return LaunchDescription([
         mavros_node,
         depth_ctrl_node,
         heading_ctrl_node,
         adhesion_ctrl_node,
+        camera_pub_node,
     ])
