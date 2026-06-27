@@ -36,6 +36,14 @@ def generate_launch_description():
     camera_pub_node = Node(
         package='rov_sensor',
         executable='camera_pub_node',
+        parameters=[{
+            'device': '/dev/video0',
+            'width': 640,
+            'height': 480,
+            'framerate': 15,
+            'publish_rate': 15.0,
+            'gcs_url': 'udp-b://@0.0.0.0:5600',
+        }],
         output='screen',
     )
 
