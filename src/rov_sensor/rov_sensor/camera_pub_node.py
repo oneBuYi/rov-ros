@@ -40,20 +40,21 @@ def _parse_gcs_url(url: str):
 
 
 def _gst_pipeline(device: str, width: int, height: int,
-                  framerate: int, gcs_url: str = '') -> str:
-    """Build GStreamer pipeline with optional UDP video stream.
+                  framerate: int, gcs_url: str = '',
+                  bitrate: int = 3000000) -> str:
+    """Build GStreamer pipeline with optional H.264 UDP video stream.
 
-    When gcs_url is non-empty, inserts a tee before the hardware decoder
-    and sends the original MJPEG frames over UDP via a second branch.
+    When gcs_url is non-empty, inserts a tee after the hardware decoder
+    and sends H.264-encoded video over RTP/UDP via a second branch.
     """
     base = (
         f'v4l2src device={device} io-mode=2 ! '
         f'image/jpeg, width={width}, height={height}, framerate={framerate}/1 ! '
+        f'nvv4l2decoder mjpeg=1 ! '
     )
 
     # BGR → ROS topic branch (always present)
     bgr_branch = (
-        'nvv4l2decoder mjpeg=1 ! '
         'nvvidconv ! '
         'video/x-raw, format=I420 ! '
         'videoconvert ! '
@@ -67,9 +68,13 @@ def _gst_pipeline(device: str, width: int, height: int,
     # Parse gcs_url for UDP branch
     host, port, is_broadcast = _parse_gcs_url(gcs_url)
 
-    udp_branch = (
+    h264_branch = (
         f'queue ! '
-        f'multipartmux boundary=frame ! '
+        f'nvvidconv ! '
+        f'video/x-raw(memory:NVMM), width={width}, height={height}, format=NV12 ! '
+        f'nvv4l2h264enc bitrate={bitrate} iframeinterval=7 insert-sps-pps=true ! '
+        f'h264parse ! '
+        f'rtph264pay config-interval=1 pt=96 mtu=1400 ! '
         f'udpsink host={host} port={port} sync=false'
     )
 
@@ -77,7 +82,7 @@ def _gst_pipeline(device: str, width: int, height: int,
         f'{base}'
         f'tee name=t ! '
         f'queue ! {bgr_branch} '
-        f't. ! {udp_branch}'
+        f't. ! {h264_branch}'
     )
 
 
@@ -96,6 +101,7 @@ class CameraPubNode(Node):
                 ('framerate', 15),
                 ('publish_rate', 15.0),
                 ('gcs_url', ''),
+                ('bitrate', 3000000),
             ],
         )
 
@@ -105,6 +111,7 @@ class CameraPubNode(Node):
         framerate = self.get_parameter('framerate').value
         publish_rate = self.get_parameter('publish_rate').value
         gcs_url = self.get_parameter('gcs_url').value
+        bitrate = self.get_parameter('bitrate').value
 
         if gcs_url:
             try:
@@ -115,7 +122,7 @@ class CameraPubNode(Node):
                 )
                 gcs_url = ''
 
-        pipeline = _gst_pipeline(device, width, height, framerate, gcs_url)
+        pipeline = _gst_pipeline(device, width, height, framerate, gcs_url, bitrate)
         self.get_logger().info(f'Opening camera: {pipeline}')
 
         self._cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
@@ -127,7 +134,7 @@ class CameraPubNode(Node):
         self._pub = self.create_publisher(Image, 'camera/image_raw', 10)
         self._timer = self.create_timer(1.0 / publish_rate, self._capture)
 
-        udp_info = f', UDP→{gcs_url}' if gcs_url else ''
+        udp_info = f', H.264 UDP→{gcs_url}@{bitrate//1000}kbps' if gcs_url else ''
         self.get_logger().info(
             f'rov_camera_pub started ({width}x{height}@{framerate}fps, '
             f'publish@{publish_rate:.0f}Hz{udp_info})')

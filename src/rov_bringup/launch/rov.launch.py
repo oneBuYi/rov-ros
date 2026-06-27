@@ -43,6 +43,7 @@ def generate_launch_description():
             'framerate': 15,
             'publish_rate': 15.0,
             'gcs_url': 'udp-b://@0.0.0.0:5600',
+            'bitrate': 3000000,
         }],
         output='screen',
     )
