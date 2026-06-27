@@ -25,7 +25,7 @@ def _parse_gcs_url(url: str):
 
     Returns (host, port, is_broadcast).
     """
-    m = re.match(r'(udp(?:-b)?)://(?:@)?([^:]*):(\d+)', url)
+    m = re.match(r'(udp(?:-b)?)://(?:@)?([^:]*):(\d+)$', url)
     if not m:
         raise ValueError(f'Invalid gcs_url: {url}')
 

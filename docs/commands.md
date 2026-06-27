@@ -92,6 +92,26 @@ ros2 service call /rov/heading_ctrl/set_target rov_msgs/srv/SetTarget "{target: 
 ros2 service call /rov/heading_ctrl/toggle_hold std_srvs/srv/Trigger
 ```
 
+### UDP 视频流接收
+
+# GStreamer 接收（PC 端，需要 GStreamer）
+gst-launch-1.0 udpsrc port=5600 ! multipartdemux ! jpegdec ! videoconvert ! autovideosink
+
+# 或通过 OpenCV + GStreamer 后端接收
+python3 -c "
+import cv2
+pipeline = 'udpsrc port=5600 ! multipartdemux ! jpegdec ! videoconvert ! appsink'
+cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
+while True:
+    ret, frame = cap.read()
+    if ret:
+        cv2.imshow('ROV Camera', frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+cap.release()
+cv2.destroyAllWindows()
+"
+
 ## Web API
 
 ```bash
@@ -117,3 +137,4 @@ curl -X POST http://localhost:8000/api/heading/hold
 # WebSocket 测试（需安装 wscat: npm i -g wscat）
 wscat -c ws://localhost:8000/ws
 ```
+
