@@ -20,6 +20,8 @@ package-lock.json
 
 # Claude Code
 .claude/
+.superpowers/
+docs/superpowers/
 
 # Editor
 *~
