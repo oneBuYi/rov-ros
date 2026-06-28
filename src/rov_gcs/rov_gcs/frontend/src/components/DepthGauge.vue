@@ -1,32 +1,23 @@
 <template>
-  <div class="depth-gauge">
-    <svg viewBox="0 0 200 200" class="gauge-svg">
-      <!-- Background arc -->
-      <circle
-        cx="100" cy="100" r="85"
-        fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="12"
-      />
-      <!-- Value arc -->
-      <circle
-        cx="100" cy="100" r="85"
-        fill="none"
-        :stroke="gaugeColor"
-        stroke-width="12"
-        stroke-linecap="round"
-        :stroke-dasharray="`${arcLength} 534`"
-        stroke-dashoffset="0"
-        transform="rotate(135, 100, 100)"
-      />
-      <!-- Depth reading -->
-      <text x="100" y="95" text-anchor="middle" class="depth-value">
-        {{ depth.toFixed(1) }}
-      </text>
-      <text x="100" y="115" text-anchor="middle" class="depth-unit">m</text>
-      <!-- Target indicator -->
-      <text x="100" y="140" text-anchor="middle" class="target-text">
-        目标 {{ targetDepth.toFixed(1) }} m
-      </text>
-    </svg>
+  <div class="depth-bar">
+    <div class="bar-label">深度</div>
+    <div class="bar-track">
+      <!-- 目标深度标记线 -->
+      <div
+        class="bar-target"
+        :style="{ bottom: (targetRatio * 100) + '%' }"
+      ></div>
+      <!-- 填充条 -->
+      <div
+        class="bar-fill"
+        :style="{ height: (ratio * 100) + '%', background: barColor }"
+      ></div>
+    </div>
+    <div class="bar-readings">
+      <span class="bar-value" :style="{ color: barColor }">{{ depth.toFixed(1) }}</span>
+      <span class="bar-unit">m</span>
+    </div>
+    <div class="bar-target-text">目标 {{ targetDepth.toFixed(1) }} m</div>
   </div>
 </template>
 
@@ -43,9 +34,11 @@ const maxDepth = computed(() => props.maxDepth || 10)
 const ratio = computed(() =>
   Math.max(0, Math.min(props.depth / maxDepth.value, 1.0))
 )
-const arcLength = computed(() => Math.round(ratio.value * 400))
+const targetRatio = computed(() =>
+  Math.max(0, Math.min(props.targetDepth / maxDepth.value, 1.0))
+)
 
-const gaugeColor = computed(() => {
+const barColor = computed(() => {
   if (ratio.value > 0.7) return '#ff6b6b'
   if (ratio.value > 0.4) return '#ffd93d'
   return '#00d4ff'
@@ -53,29 +46,80 @@ const gaugeColor = computed(() => {
 </script>
 
 <style scoped>
-.depth-gauge {
+.depth-bar {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  padding: 8px;
+  gap: 6px;
+  padding: 10px 12px;
   background: rgba(20, 25, 36, 0.65);
   border-radius: 8px;
+  width: 70px;
 }
-.gauge-svg {
-  width: 140px;
-  height: 140px;
+
+.bar-label {
+  color: #8899aa;
+  font-size: 12px;
 }
-.depth-value {
-  font-size: 32px;
+
+.bar-track {
+  position: relative;
+  width: 24px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 4px;
+  transition: height 0.3s ease, background 0.3s ease;
+}
+
+.bar-target {
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.5);
+  z-index: 1;
+}
+
+.bar-target::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid rgba(255, 255, 255, 0.5);
+}
+
+.bar-readings {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.bar-value {
+  font-size: 24px;
   font-weight: 700;
-  fill: #e0e6ed;
 }
-.depth-unit {
-  font-size: 13px;
-  fill: #8899aa;
+
+.bar-unit {
+  font-size: 12px;
+  color: #8899aa;
 }
-.target-text {
-  font-size: 11px;
-  fill: #8899aa;
+
+.bar-target-text {
+  font-size: 10px;
+  color: #8899aa;
 }
 </style>

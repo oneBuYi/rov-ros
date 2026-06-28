@@ -4,8 +4,11 @@
       <span class="dot" :class="rosConnected ? 'green' : 'red'"></span>
       ROS
     </span>
-    <span class="hold-badge" :class="holdEnabled ? 'active' : ''">
-      HOLD
+    <span class="hold-badge" :class="depthHoldEnabled ? 'active' : ''">
+      定深
+    </span>
+    <span class="hold-badge" :class="headingHoldEnabled ? 'active' : ''">
+      定航
     </span>
   </div>
 </template>
@@ -13,7 +16,8 @@
 <script setup lang="ts">
 defineProps<{
   rosConnected: boolean
-  holdEnabled: boolean
+  depthHoldEnabled: boolean
+  headingHoldEnabled: boolean
 }>()
 </script>
 

@@ -55,7 +55,7 @@ ros2 run rosbridge_server rosbridge_websocket --ros-args -p port:=9090 -p addres
 python3 -m uvicorn rov_gcs.backend.main:app --host 0.0.0.0 --port 8000
 
 # 浏览器打开
-# http://192.168.137.72:8000
+# http://192.168.137.100:8000
 ```
 
 ## 调试

@@ -26,8 +26,19 @@
       <div class="hud-top-left">
         <StatusBar
           :ros-connected="rosConnected"
-          :hold-enabled="store.telemetry.depth_hold_enabled || store.telemetry.heading_hold_enabled"
+          :depth-hold-enabled="store.telemetry.depth_hold_enabled"
+          :heading-hold-enabled="store.telemetry.heading_hold_enabled"
         />
+        <div class="gauges-row">
+          <DepthGauge
+            :depth="store.telemetry.depth"
+            :target-depth="store.telemetry.target_depth"
+          />
+          <HeadingGauge
+            :heading="store.telemetry.yaw"
+            :target-heading="store.telemetry.target_heading"
+          />
+        </div>
       </div>
       <div class="hud-top-right">
         <TelemetryPanel
@@ -36,12 +47,6 @@
           :yaw="store.telemetry.yaw"
           :vertical-pwm="store.telemetry.vertical_pwm"
           :yaw-pwm="store.telemetry.yaw_pwm"
-        />
-      </div>
-      <div class="hud-mid-left">
-        <DepthGauge
-          :depth="store.telemetry.depth"
-          :target-depth="store.telemetry.target_depth"
         />
       </div>
       <div class="hud-center">
@@ -67,6 +72,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import StatusBar from './components/StatusBar.vue'
 import DepthGauge from './components/DepthGauge.vue'
+import HeadingGauge from './components/HeadingGauge.vue'
 import TelemetryPanel from './components/TelemetryPanel.vue'
 import ControlPanel from './components/ControlPanel.vue'
 import CompassRose from './components/CompassRose.vue'
@@ -185,6 +191,14 @@ html, body {
   grid-column: 1;
   grid-row: 1;
   justify-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gauges-row {
+  display: flex;
+  gap: 8px;
 }
 
 .hud-top-right {
