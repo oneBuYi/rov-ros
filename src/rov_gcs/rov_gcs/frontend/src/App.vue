@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import StatusBar from './components/StatusBar.vue'
 import DepthGauge from './components/DepthGauge.vue'
 import TelemetryPanel from './components/TelemetryPanel.vue'
@@ -83,6 +83,12 @@ const streamError = ref(false)
 const streamUrl = '/api/video/stream'
 
 const rosConnected = computed(() => store.telemetry.ros_connected)
+
+watch(rosConnected, (connected) => {
+  if (connected) {
+    streamError.value = false
+  }
+})
 
 const wsUrl = `ws://${window.location.host}/ws`
 const { connect, close, send } = useWebSocket(wsUrl)

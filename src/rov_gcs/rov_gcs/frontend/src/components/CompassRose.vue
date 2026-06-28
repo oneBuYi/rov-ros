@@ -68,10 +68,10 @@ const safeHeading = computed(() =>
   isNaN(props.heading) ? 0 : props.heading
 )
 
-const directionLabels = ['N', '5', '10', 'NE', '20', '25',
-  'E', '35', '40', 'SE', '50', '55',
-  'S', '65', '70', 'SW', '80', '85',
-  'W', '105', '110', 'NW', '120', '125']
+const directionLabels = ['N', '15', '30', 'NE', '60', '75',
+  'E', '105', '120', 'SE', '150', '165',
+  'S', '195', '210', 'SW', '240', '255',
+  'W', '285', '300', 'NW', '330', '345']
 
 const pointerPoints = '100,15 92,35 108,35'
 </script>
