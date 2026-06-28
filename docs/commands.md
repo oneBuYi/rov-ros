@@ -17,7 +17,7 @@ cd src/rov_gcs/rov_gcs/frontend
 npm install --registry=https://registry.npmmirror.com
 npm run build
 cd /home/jetson/whj/rov-ros
-colcon build --packages-select rov_gcs
+colcon build --packages-select rov_gcs --symlink-install
 
 # 构建所有包
 rm -rf build/ install/ log/ && colcon build --symlink-install
@@ -49,6 +49,7 @@ ros2 run rov_control depth_ctrl_node
 ros2 run rov_control adhesion_ctrl_node
 ros2 run rov_gcs gcs_backend
 ros2 run rov_sensor camera_pub_node
+ros2 run mavros mavros_node --ros-args -p fcu_url:=/dev/pixhawk:115200 -p gcs_url:="udp-b://@0.0.0.0:14551" -p system_id:=255 -p component_id:=190
 
 # 快速启动 Web 上位机（rosbridge + uvicorn，不使用 launch）
 ros2 run rosbridge_server rosbridge_websocket --ros-args -p port:=9090 -p address:=0.0.0.0 &

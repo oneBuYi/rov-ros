@@ -29,6 +29,17 @@
           :depth-hold-enabled="store.telemetry.depth_hold_enabled"
           :heading-hold-enabled="store.telemetry.heading_hold_enabled"
         />
+      </div>
+      <div class="hud-top-right">
+        <TelemetryPanel
+          :lat="store.telemetry.lat"
+          :lon="store.telemetry.lon"
+          :yaw="store.telemetry.yaw"
+          :vertical-pwm="store.telemetry.vertical_pwm"
+          :yaw-pwm="store.telemetry.yaw_pwm"
+        />
+      </div>
+      <div class="hud-mid-left">
         <div class="gauges-row">
           <DepthGauge
             :depth="store.telemetry.depth"
@@ -40,21 +51,27 @@
           />
         </div>
       </div>
-      <div class="hud-top-right">
-        <TelemetryPanel
-          :lat="store.telemetry.lat"
-          :lon="store.telemetry.lon"
-          :yaw="store.telemetry.yaw"
-          :vertical-pwm="store.telemetry.vertical_pwm"
-          :yaw-pwm="store.telemetry.yaw_pwm"
-        />
-      </div>
-      <div class="hud-center">
-        <CompassRose :heading="store.telemetry.yaw" />
-      </div>
       <div class="hud-mid-right">
         <ControlPanel :gamepad-connected="gamepadConnected" />
       </div>
+
+      <!-- 虚拟摇杆 - 左脸颊（水平移动） -->
+      <div class="hud-cheek-left">
+        <VirtualJoystick
+          :axis-labels="{ up: '前进', down: '后退', left: '左移', right: '右移' }"
+          :size="160"
+          @update="onLeftJoystick"
+        />
+      </div>
+      <!-- 虚拟摇杆 - 右脸颊（升降/旋转） -->
+      <div class="hud-cheek-right">
+        <VirtualJoystick
+          :axis-labels="{ up: '上升', down: '下降', left: '左转', right: '右转' }"
+          :size="160"
+          @update="onRightJoystick"
+        />
+      </div>
+
       <div class="hud-bot-left">
         <GridStatus />
       </div>
@@ -75,7 +92,7 @@ import DepthGauge from './components/DepthGauge.vue'
 import HeadingGauge from './components/HeadingGauge.vue'
 import TelemetryPanel from './components/TelemetryPanel.vue'
 import ControlPanel from './components/ControlPanel.vue'
-import CompassRose from './components/CompassRose.vue'
+import VirtualJoystick from './components/VirtualJoystick.vue'
 import GridStatus from './components/GridStatus.vue'
 import GridTarget from './components/GridTarget.vue'
 import GridReached from './components/GridReached.vue'
@@ -106,6 +123,24 @@ const { connect, close, send } = useWebSocket(wsUrl)
 
 function onStreamError() {
   streamError.value = true
+}
+
+// ---- 虚拟摇杆 ----
+
+function onLeftJoystick(data: { x: number; y: number }) {
+  // 左摇杆：x=左移/右移, y=前进/后退
+  send({
+    type: 'joystick',
+    data: { x: data.y, y: data.x, z: 0, r: 0, buttons: [] },
+  })
+}
+
+function onRightJoystick(data: { x: number; y: number }) {
+  // 右摇杆：x=左转/右转, y=上升/下降
+  send({
+    type: 'joystick',
+    data: { x: 0, y: 0, z: data.y, r: data.x, buttons: [] },
+  })
 }
 
 onMounted(() => {
@@ -210,22 +245,36 @@ html, body {
 .hud-mid-left {
   grid-column: 1;
   grid-row: 2;
-  align-self: center;
+  align-self: start;
   justify-self: start;
-}
-
-.hud-center {
-  grid-column: 2;
-  grid-row: 2;
-  align-self: end;
-  justify-self: center;
+  margin-top: 50px;
 }
 
 .hud-mid-right {
   grid-column: 3;
   grid-row: 2;
-  align-self: center;
+  align-self: start;
   justify-self: end;
+  margin-top: 50px;
+}
+
+/* 虚拟摇杆 - 脸颊位置（中下部两侧） */
+.hud-cheek-left {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: end;
+  justify-self: start;
+  margin-bottom: 23vh;
+  margin-left: 18vw;
+}
+
+.hud-cheek-right {
+  grid-column: 3;
+  grid-row: 2;
+  align-self: end;
+  justify-self: end;
+  margin-bottom: 23vh;
+  margin-right: 18vw;
 }
 
 .hud-bot-left {
@@ -249,7 +298,8 @@ html, body {
 /* 小屏适配 */
 @media (max-width: 320px) {
   .hud-mid-left,
-  .hud-center {
+  .hud-cheek-left,
+  .hud-cheek-right {
     display: none;
   }
   .hud-overlay {
