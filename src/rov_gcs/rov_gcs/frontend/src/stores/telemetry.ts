@@ -13,6 +13,9 @@ export interface Telemetry {
   lon: number
   yaw: number
   ros_connected: boolean
+  current_grid: string
+  target_grid: string
+  grid_reached: boolean
 }
 
 export const useTelemetryStore = defineStore('telemetry', () => {
@@ -28,6 +31,9 @@ export const useTelemetryStore = defineStore('telemetry', () => {
     lon: 0,
     yaw: 0,
     ros_connected: false,
+    current_grid: '',
+    target_grid: '',
+    grid_reached: false,
   })
 
   function updateTelemetry(data: Partial<Telemetry>) {
