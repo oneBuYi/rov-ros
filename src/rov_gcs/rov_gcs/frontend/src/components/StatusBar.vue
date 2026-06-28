@@ -2,11 +2,10 @@
   <div class="status-bar">
     <span class="indicator">
       <span class="dot" :class="rosConnected ? 'green' : 'red'"></span>
-      {{ rosConnected ? 'ROS 已连接' : 'ROS 未连接' }}
+      ROS
     </span>
-    <span class="spacer"></span>
     <span class="hold-badge" :class="holdEnabled ? 'active' : ''">
-      HOLD {{ holdEnabled ? '开' : '关' }}
+      HOLD
     </span>
   </div>
 </template>
@@ -22,9 +21,10 @@ defineProps<{
 .status-bar {
   display: flex;
   align-items: center;
-  padding: 6px 16px;
-  background: #141924;
-  border-bottom: 1px solid #2a3040;
+  gap: 12px;
+  padding: 4px 12px;
+  background: rgba(20, 25, 36, 0.65);
+  border-radius: 8px;
   font-size: 13px;
 }
 .dot {
@@ -42,14 +42,12 @@ defineProps<{
   background: #ff1744;
   box-shadow: 0 0 6px #ff1744;
 }
-.spacer {
-  flex: 1;
-}
 .hold-badge {
-  padding: 2px 10px;
+  padding: 1px 8px;
   border-radius: 4px;
   background: #2a3040;
   color: #8899aa;
+  font-size: 11px;
 }
 .hold-badge.active {
   background: #00d4ff33;

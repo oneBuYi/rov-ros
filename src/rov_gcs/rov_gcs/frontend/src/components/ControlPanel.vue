@@ -1,5 +1,7 @@
 <template>
   <div class="control-panel">
+    <p v-if="error" class="error">{{ error }}</p>
+
     <!-- 深度控制 -->
     <div class="ctrl-group">
       <label>目标深度 (m)</label>
@@ -9,12 +11,11 @@
           type="number"
           step="0.1"
           min="0"
-          placeholder="输入深度"
+          placeholder="深度"
           @keyup.enter="handleSetDepthTarget"
         />
         <button :disabled="sending" @click="handleSetDepthTarget">设定</button>
       </div>
-      <p v-if="error" class="error">{{ error }}</p>
     </div>
     <button
       class="hold-btn"
@@ -35,7 +36,7 @@
           step="1"
           min="0"
           max="360"
-          placeholder="输入航向"
+          placeholder="航向"
           @keyup.enter="handleSetHeadingTarget"
         />
         <button :disabled="sending" @click="handleSetHeadingTarget">设定</button>
@@ -62,7 +63,7 @@
 
     <div class="gamepad-status">
       <template v-if="gamepadConnected">🎮 手柄已连接</template>
-      <template v-else>🎮 按手柄任意键激活</template>
+      <template v-else>🎮 按手柄键激活</template>
     </div>
   </div>
 </template>
@@ -169,46 +170,44 @@ async function handleHeadingHold() {
 <style scoped>
 .control-panel {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 16px;
-  padding: 10px 16px;
-  background: #141924;
-  border-top: 1px solid #2a3040;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(20, 25, 36, 0.65);
+  border-radius: 8px;
 }
 .ctrl-group {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 4px;
 }
 .ctrl-group label {
   color: #8899aa;
-  font-size: 13px;
-  white-space: nowrap;
+  font-size: 12px;
 }
 .input-row {
   display: flex;
   gap: 6px;
 }
 input {
-  width: 100px;
-  padding: 6px 10px;
+  width: 90px;
+  padding: 4px 8px;
   border: 1px solid #2a3040;
   border-radius: 4px;
   background: #0a0e17;
   color: #e0e6ed;
-  font-size: 14px;
+  font-size: 13px;
 }
 input:focus {
   outline: none;
   border-color: #00d4ff;
 }
 button {
-  padding: 6px 14px;
+  padding: 4px 10px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   background: #00d4ff;
   color: #0a0e17;
   font-weight: 600;
@@ -222,13 +221,13 @@ button:disabled {
   color: #8899aa;
 }
 .hold-btn.active {
-  background: #00d4ff33;
+  background: rgba(0, 212, 255, 0.2);
   color: #00d4ff;
 }
 .error {
   color: #ff6b6b;
-  font-size: 12px;
-  margin-left: 8px;
+  font-size: 11px;
+  margin: 0;
 }
 .arm-btn {
   background: #2a3040;
@@ -236,16 +235,15 @@ button:disabled {
   font-weight: 600;
 }
 .arm-btn.armed {
-  background: #ff6b6b33;
+  background: rgba(255, 107, 107, 0.2);
   color: #ff6b6b;
 }
 .arm-btn.disarmed {
-  background: #4caf5033;
+  background: rgba(76, 175, 80, 0.2);
   color: #4caf50;
 }
 .gamepad-status {
-  margin-left: auto;
-  font-size: 13px;
+  font-size: 11px;
   color: #8899aa;
 }
 </style>

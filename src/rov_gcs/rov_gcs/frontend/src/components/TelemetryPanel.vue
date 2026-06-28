@@ -13,11 +13,11 @@
       <span class="value">{{ yaw.toFixed(1) }}°</span>
     </div>
     <div class="telem-item">
-      <span class="label">深度 PID</span>
+      <span class="label">深度PID</span>
       <span class="value">{{ verticalPwm.toFixed(1) }}</span>
     </div>
     <div class="telem-item">
-      <span class="label">航向 PID</span>
+      <span class="label">航向PID</span>
       <span class="value">{{ yawPwm.toFixed(1) }}</span>
     </div>
   </div>
@@ -36,24 +36,25 @@ defineProps<{
 <style scoped>
 .telemetry-panel {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+  background: rgba(20, 25, 36, 0.65);
+  border-radius: 8px;
 }
 .telem-item {
   display: flex;
-  justify-content: space-between;
-  padding: 6px 12px;
-  background: #141924;
-  border-radius: 6px;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
 }
 .label {
   color: #8899aa;
-  font-size: 13px;
+  font-size: 11px;
 }
 .value {
   color: #e0e6ed;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   font-family: monospace;
 }

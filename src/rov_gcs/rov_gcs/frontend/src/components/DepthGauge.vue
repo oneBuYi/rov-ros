@@ -4,7 +4,7 @@
       <!-- Background arc -->
       <circle
         cx="100" cy="100" r="85"
-        fill="none" stroke="#2a3040" stroke-width="12"
+        fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="12"
       />
       <!-- Value arc -->
       <circle
@@ -41,7 +41,7 @@ const props = defineProps<{
 
 const maxDepth = computed(() => props.maxDepth || 10)
 const ratio = computed(() =>
-  Math.min(props.depth / maxDepth.value, 1.0)
+  Math.max(0, Math.min(props.depth / maxDepth.value, 1.0))
 )
 const arcLength = computed(() => Math.round(ratio.value * 400))
 
@@ -57,23 +57,25 @@ const gaugeColor = computed(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 16px;
+  padding: 8px;
+  background: rgba(20, 25, 36, 0.65);
+  border-radius: 8px;
 }
 .gauge-svg {
-  width: 200px;
-  height: 200px;
+  width: 140px;
+  height: 140px;
 }
 .depth-value {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 700;
   fill: #e0e6ed;
 }
 .depth-unit {
-  font-size: 14px;
+  font-size: 13px;
   fill: #8899aa;
 }
 .target-text {
-  font-size: 12px;
+  font-size: 11px;
   fill: #8899aa;
 }
 </style>
