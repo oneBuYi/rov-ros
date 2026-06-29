@@ -16,6 +16,12 @@ export interface Telemetry {
   current_grid: string
   target_grid: string
   grid_reached: boolean
+  grid_rows: number
+  grid_cols: number
+  grid_current_row: number
+  grid_current_col: number
+  grid_target_row: number
+  grid_target_col: number
 }
 
 export const useTelemetryStore = defineStore('telemetry', () => {
@@ -34,6 +40,12 @@ export const useTelemetryStore = defineStore('telemetry', () => {
     current_grid: '',
     target_grid: '',
     grid_reached: false,
+    grid_rows: 0,
+    grid_cols: 0,
+    grid_current_row: -1,
+    grid_current_col: -1,
+    grid_target_row: -1,
+    grid_target_col: -1,
   })
 
   function updateTelemetry(data: Partial<Telemetry>) {

@@ -56,6 +56,20 @@ export function useApi() {
     return result
   }
 
+  // ----- grid control -----
+
+  async function setGridTarget(row: number, col: number) {
+    const result = await request('POST', '/grid/set_target', { row, col })
+    if (result.success) {
+      store.updateTelemetry({
+        grid_target_row: row,
+        grid_target_col: col,
+        target_grid: `R${row}C${col}`,
+      })
+    }
+    return result
+  }
+
   // ----- arm/disarm -----
 
   async function arm() {
@@ -66,5 +80,5 @@ export function useApi() {
     return request('POST', '/disarm')
   }
 
-  return { setDepthTarget, toggleDepthHold, setHeadingTarget, toggleHeadingHold, arm, disarm }
+  return { setDepthTarget, toggleDepthHold, setHeadingTarget, toggleHeadingHold, setGridTarget, arm, disarm }
 }
