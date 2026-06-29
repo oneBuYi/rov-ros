@@ -1,19 +1,25 @@
 # Pool wall grid center points.
-# Each entry is a grid cell identified by (row, col).
-# - row: vertical index (0 = top, increasing downward)
-# - col: horizontal index (0 = left, increasing rightward)
-# - lat/lon: WGS84 decimal degrees
-# - depth: meters below water surface (positive = down)
-# Top-level key must match node's fully qualified path: /rov/grid_monitor
+# Grid cells are defined by parallel arrays — each index i across all five
+# arrays represents one grid cell.  ROS 2 Foxy only supports flat arrays of
+# simple types (int[], double[], string[], …) — lists of mappings are NOT
+# valid parameter values, hence this layout.
+#
+# - grid_rows[i]: vertical index (0 = top, increasing downward)
+# - grid_cols[i]: horizontal index (0 = left, increasing rightward)
+# - grid_lats[i] / grid_lons[i]: WGS84 decimal degrees
+# - grid_depths[i]: meters below water surface (positive = down)
+#
+# All five arrays MUST have the same length.
+#
+# Top-level key must match the node's fully qualified path: /rov/grid_monitor
 rov/grid_monitor:
   ros__parameters:
-    grids:
-      - { row: 0, col: 0, lat: 30.123456, lon: 120.123456, depth: 0.5 }
-      - { row: 0, col: 1, lat: 30.123470, lon: 120.123456, depth: 0.5 }
-      - { row: 0, col: 2, lat: 30.123484, lon: 120.123456, depth: 0.5 }
-      - { row: 1, col: 0, lat: 30.123456, lon: 120.123470, depth: 1.0 }
-      - { row: 1, col: 1, lat: 30.123470, lon: 120.123470, depth: 1.0 }
-      - { row: 1, col: 2, lat: 30.123484, lon: 120.123470, depth: 1.0 }
-    distance_threshold: 0.5
-    depth_threshold: 0.2
+    grid_rows:   [0, 0, 0, 0, 0, 0]
+    grid_cols:   [0, 1, 2, 3, 4, 5]
+    grid_lats:   [39.9999949, 39.9999945, 39.9999928, 39.9999899, 39.9999892, 39.9999864]
+    grid_lons:   [109.9999624, 109.9999583, 109.9999468, 109.9999272, 109.9999233, 109.9999054]
+    grid_depths: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+
+    distance_threshold: 500
+    depth_threshold: 1
     control_rate: 10.0

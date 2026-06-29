@@ -79,6 +79,42 @@ async def _subscribe_all(rb: RosbridgeClient) -> None:
         "sensor_msgs/msg/Image",
         on_camera_image,
     )
+    # Grid topics
+    await rb.subscribe(
+        "/rov/grid/rows",
+        "std_msgs/msg/Int32",
+        on_grid_rows,
+    )
+    await rb.subscribe(
+        "/rov/grid/cols",
+        "std_msgs/msg/Int32",
+        on_grid_cols,
+    )
+    await rb.subscribe(
+        "/rov/grid/current_row",
+        "std_msgs/msg/Int32",
+        on_grid_current_row,
+    )
+    await rb.subscribe(
+        "/rov/grid/current_col",
+        "std_msgs/msg/Int32",
+        on_grid_current_col,
+    )
+    await rb.subscribe(
+        "/rov/grid/target_row",
+        "std_msgs/msg/Int32",
+        on_grid_target_row,
+    )
+    await rb.subscribe(
+        "/rov/grid/target_col",
+        "std_msgs/msg/Int32",
+        on_grid_target_col,
+    )
+    await rb.subscribe(
+        "/rov/grid/in_target",
+        "std_msgs/msg/Bool",
+        on_grid_in_target,
+    )
 
 
 # ----- rosbridge topic callbacks -----
@@ -121,6 +157,71 @@ def on_depth_hold_status(msg: dict):
 def on_heading_hold_status(msg: dict):
     """/rov/heading_ctrl/status_hold -> heading hold state."""
     store.update(heading_hold_enabled=bool(msg.get("data", False)))
+
+
+def on_grid_rows(msg: dict):
+    """/rov/grid/rows -> grid total rows."""
+    store.update(grid_rows=msg.get("data", 0))
+
+
+def on_grid_cols(msg: dict):
+    """/rov/grid/cols -> grid total cols."""
+    store.update(grid_cols=msg.get("data", 0))
+
+
+def on_grid_current_row(msg: dict):
+    """/rov/grid/current_row -> ROV current cell row."""
+    row = msg.get("data", -1)
+    store.update(grid_current_row=row)
+    _update_current_grid_label()
+
+
+def on_grid_current_col(msg: dict):
+    """/rov/grid/current_col -> ROV current cell col."""
+    col = msg.get("data", -1)
+    store.update(grid_current_col=col)
+    _update_current_grid_label()
+
+
+def on_grid_target_row(msg: dict):
+    """/rov/grid/target_row -> target cell row."""
+    row = msg.get("data", -1)
+    store.update(grid_target_row=row)
+    _update_target_grid_label()
+
+
+def on_grid_target_col(msg: dict):
+    """/rov/grid/target_col -> target cell col."""
+    col = msg.get("data", -1)
+    store.update(grid_target_col=col)
+    _update_target_grid_label()
+
+
+def on_grid_in_target(msg: dict):
+    """/rov/grid/in_target -> grid reached status."""
+    store.update(grid_reached=bool(msg.get("data", False)))
+
+
+def _update_current_grid_label():
+    """Derive current_grid string label from current row/col."""
+    snap = store.snapshot()
+    if snap.grid_current_row >= 0 and snap.grid_current_col >= 0:
+        store.update(
+            current_grid=f"R{snap.grid_current_row}C{snap.grid_current_col}"
+        )
+    else:
+        store.update(current_grid="")
+
+
+def _update_target_grid_label():
+    """Derive target_grid string label from target row/col."""
+    snap = store.snapshot()
+    if snap.grid_target_row >= 0 and snap.grid_target_col >= 0:
+        store.update(
+            target_grid=f"R{snap.grid_target_row}C{snap.grid_target_col}"
+        )
+    else:
+        store.update(target_grid="")
 
 
 def on_camera_image(msg: dict):

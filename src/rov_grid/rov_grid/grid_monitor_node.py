@@ -35,7 +35,8 @@ class GridMonitorNode(Node):
     (negated to get depth).  At ``control_rate`` Hz, computes horizontal
     distance via Haversine and checks against the depth window.  Publishes
     ``in_target`` (Bool) continuously; ``target_row`` / ``target_col``
-    only when the target changes.
+    only when the target changes.  Also publishes grid dimensions and the
+    current closest cell for web visualization.
     """
 
     def __init__(self):
@@ -44,7 +45,11 @@ class GridMonitorNode(Node):
         self.declare_parameters(
             namespace='',
             parameters=[
-                ('grids', []),
+                ('grid_rows', []),
+                ('grid_cols', []),
+                ('grid_lats', []),
+                ('grid_lons', []),
+                ('grid_depths', []),
                 ('distance_threshold', 0.5),
                 ('depth_threshold', 0.2),
                 ('control_rate', 10.0),
@@ -56,6 +61,8 @@ class GridMonitorNode(Node):
 
         self._grids = {}          # {(row, col): (lat, lon, depth)}
         self._target_key = None    # (row, col) or None
+        self._grid_rows = 0        # total rows in grid config
+        self._grid_cols = 0        # total cols in grid config
         self._current_lat = 0.0
         self._current_lon = 0.0
         self._current_depth = 0.0
@@ -91,6 +98,18 @@ class GridMonitorNode(Node):
         self._pub_target_col = self.create_publisher(
             Int32, 'grid/target_col', 10,
         )
+        self._pub_current_row = self.create_publisher(
+            Int32, 'grid/current_row', 10,
+        )
+        self._pub_current_col = self.create_publisher(
+            Int32, 'grid/current_col', 10,
+        )
+        self._pub_grid_rows = self.create_publisher(
+            Int32, 'grid/rows', 10,
+        )
+        self._pub_grid_cols = self.create_publisher(
+            Int32, 'grid/cols', 10,
+        )
 
         # --- Service ---
         self._srv_set_target = self.create_service(
@@ -104,8 +123,13 @@ class GridMonitorNode(Node):
         rate = self.get_parameter('control_rate').value
         self._timer = self.create_timer(1.0 / rate, self._control_loop)
 
+        # Publish grid dimensions once (they don't change at runtime)
+        self._pub_grid_rows.publish(Int32(data=self._grid_rows))
+        self._pub_grid_cols.publish(Int32(data=self._grid_cols))
+
         self.get_logger().info(
-            f'grid_monitor started with {len(self._grids)} grid cells loaded'
+            f'grid_monitor started: {len(self._grids)} cells '
+            f'({self._grid_rows} rows x {self._grid_cols} cols)'
         )
 
     # ------------------------------------------------------------------
@@ -113,25 +137,46 @@ class GridMonitorNode(Node):
     # ------------------------------------------------------------------
 
     def _load_grids(self):
-        """Load grid points from the ROS parameter into ``self._grids``."""
-        raw = self.get_parameter('grids').value
-        if not raw:
+        """Load grid points from flat ROS parameter arrays into ``self._grids``.
+
+        Each index *i* across ``grid_rows``, ``grid_cols``, ``grid_lats``,
+        ``grid_lons``, ``grid_depths`` represents one grid cell.  All five
+        arrays must have the same length.
+        """
+        rows = self.get_parameter('grid_rows').value
+        cols = self.get_parameter('grid_cols').value
+        lats = self.get_parameter('grid_lats').value
+        lons = self.get_parameter('grid_lons').value
+        depths = self.get_parameter('grid_depths').value
+
+        if not all([rows, cols, lats, lons, depths]):
             self.get_logger().error(
-                'No grids configured — pool_wall_grid.yaml may be missing '
-                'or empty. in_target will always be False.'
+                'One or more grid parameter arrays are empty — '
+                'pool_wall_grid.yaml may be missing or incomplete. '
+                'in_target will always be False.'
             )
             return
 
-        for item in raw:
+        lengths = [len(rows), len(cols), len(lats), len(lons), len(depths)]
+        if len(set(lengths)) != 1:
+            self.get_logger().error(
+                f'Grid parameter arrays have mismatched lengths: '
+                f'rows={len(rows)}, cols={len(cols)}, lats={len(lats)}, '
+                f'lons={len(lons)}, depths={len(depths)}. '
+                f'All arrays must have the same length.'
+            )
+            return
+
+        for i in range(len(rows)):
             try:
-                row = int(item['row'])
-                col = int(item['col'])
-                lat = float(item['lat'])
-                lon = float(item['lon'])
-                depth_val = float(item['depth'])
-            except (KeyError, TypeError, ValueError) as e:
+                row = int(rows[i])
+                col = int(cols[i])
+                lat = float(lats[i])
+                lon = float(lons[i])
+                depth_val = float(depths[i])
+            except (TypeError, ValueError) as e:
                 self.get_logger().error(
-                    f'Skipping malformed grid entry {item}: {e}'
+                    f'Skipping malformed grid entry at index {i}: {e}'
                 )
                 continue
 
@@ -146,6 +191,13 @@ class GridMonitorNode(Node):
             self.get_logger().error(
                 'No valid grids loaded after parsing — all entries were malformed'
             )
+            return
+
+        # Derive grid dimensions from loaded data
+        rows_set = {k[0] for k in self._grids}
+        cols_set = {k[1] for k in self._grids}
+        self._grid_rows = max(rows_set) + 1 if rows_set else 0
+        self._grid_cols = max(cols_set) + 1 if cols_set else 0
 
     # ------------------------------------------------------------------
     # MAVROS callbacks
@@ -167,8 +219,33 @@ class GridMonitorNode(Node):
     # ------------------------------------------------------------------
 
     def _control_loop(self):
+        # Publish grid dimensions periodically so late subscribers get them
+        self._pub_grid_rows.publish(Int32(data=self._grid_rows))
+        self._pub_grid_cols.publish(Int32(data=self._grid_cols))
+
         msg = Bool()
 
+        # --- Find current closest cell (independent of target) ---
+        if self._lat_lon_ready and self._depth_ready:
+            best_dist = float('inf')
+            best_key = None
+            for key, (glat, glon, gdepth) in self._grids.items():
+                dist = haversine_distance(
+                    self._current_lat, self._current_lon,
+                    glat, glon,
+                )
+                depth_ok = abs(self._current_depth - gdepth) < self._depth_threshold
+                if dist < best_dist and depth_ok:
+                    best_dist = dist
+                    best_key = key
+            if best_key is not None and best_dist < self._distance_threshold:
+                self._pub_current_row.publish(Int32(data=best_key[0]))
+                self._pub_current_col.publish(Int32(data=best_key[1]))
+            else:
+                self._pub_current_row.publish(Int32(data=-1))
+                self._pub_current_col.publish(Int32(data=-1))
+
+        # --- Target check ---
         if self._target_key is None:
             msg.data = False
             self._pub_in_target.publish(msg)

@@ -2,7 +2,12 @@ import logging
 
 from fastapi import APIRouter, HTTPException
 
-from .models import ApiResponse, SetDepthTargetRequest, SetHeadingTargetRequest
+from .models import (
+    ApiResponse,
+    SetDepthTargetRequest,
+    SetHeadingTargetRequest,
+    SetGridTargetRequest,
+)
 from .telemetry import store
 
 logger = logging.getLogger(__name__)
@@ -111,6 +116,36 @@ async def toggle_heading_hold():
         message = result.get("message", "")
         heading_hold_enabled = "enabled" in message.lower()
         store.update(heading_hold_enabled=heading_hold_enabled)
+        return ApiResponse(success=success, message=message)
+    except RuntimeError as e:
+        raise HTTPException(status_code=504, detail=str(e))
+
+
+# ----- grid control -----
+
+
+@router.post("/grid/set_target", response_model=ApiResponse)
+async def set_grid_target(req: SetGridTargetRequest):
+    """Set target grid cell via rosbridge service call."""
+    from .main import get_rosbridge
+
+    rb = get_rosbridge()
+    if not rb or not rb.connected:
+        raise HTTPException(status_code=503, detail="ROS not connected")
+
+    try:
+        result = await rb.call_service(
+            service="/rov/grid/set_grid_target",
+            args={"row": req.row, "col": req.col},
+        )
+        success = result.get("success", False)
+        message = result.get("message", "")
+        if success:
+            store.update(
+                grid_target_row=req.row,
+                grid_target_col=req.col,
+                target_grid=f"R{req.row}C{req.col}",
+            )
         return ApiResponse(success=success, message=message)
     except RuntimeError as e:
         raise HTTPException(status_code=504, detail=str(e))

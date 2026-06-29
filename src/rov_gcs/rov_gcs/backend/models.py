@@ -13,6 +13,16 @@ class Telemetry(BaseModel):
     lon: float = 0.0                # longitude
     yaw: float = 0.0                # current heading (degrees)
     ros_connected: bool = False     # ROS connection status
+    # Grid data
+    current_grid: str = ""          # current grid cell label, e.g. "R0C3"
+    target_grid: str = ""           # target grid cell label
+    grid_reached: bool = False      # ROV is within target cell thresholds
+    grid_rows: int = 0              # total rows in grid config
+    grid_cols: int = 0              # total cols in grid config
+    grid_current_row: int = -1      # current ROV cell row (-1 = none)
+    grid_current_col: int = -1      # current ROV cell col (-1 = none)
+    grid_target_row: int = -1       # target cell row (-1 = none)
+    grid_target_col: int = -1       # target cell col (-1 = none)
 
 
 class SetDepthTargetRequest(BaseModel):
@@ -24,6 +34,15 @@ class SetDepthTargetRequest(BaseModel):
 class SetHeadingTargetRequest(BaseModel):
     target: float = Field(
         ..., description="target heading (degrees), will be normalized to 0-360"
+    )
+
+
+class SetGridTargetRequest(BaseModel):
+    row: int = Field(
+        ..., ge=0, description="target grid row index"
+    )
+    col: int = Field(
+        ..., ge=0, description="target grid col index"
     )
 
 

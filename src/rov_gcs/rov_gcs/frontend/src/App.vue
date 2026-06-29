@@ -51,6 +51,9 @@
           />
         </div>
       </div>
+      <div class="hud-mid-left">
+        <GridMap />
+      </div>
       <div class="hud-mid-right">
         <ControlPanel :gamepad-connected="gamepadConnected" />
       </div>
@@ -96,6 +99,7 @@ import VirtualJoystick from './components/VirtualJoystick.vue'
 import GridStatus from './components/GridStatus.vue'
 import GridTarget from './components/GridTarget.vue'
 import GridReached from './components/GridReached.vue'
+import GridMap from './components/GridMap.vue'
 import { useWebSocket } from './composables/useWebSocket'
 import { useGamepad } from './composables/useGamepad'
 import { useTelemetryStore } from './stores/telemetry'

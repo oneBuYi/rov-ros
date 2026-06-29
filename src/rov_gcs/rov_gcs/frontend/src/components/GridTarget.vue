@@ -1,23 +1,43 @@
 <template>
   <div class="grid-target">
     <input
-      v-model="targetInput"
-      type="text"
-      placeholder="输入目标网格 ID"
+      v-model.number="targetRow"
+      type="number"
+      min="0"
+      placeholder="行"
+      class="grid-input"
       @keyup.enter="handleSetTarget"
     />
-    <button @click="handleSetTarget">设定</button>
+    <input
+      v-model.number="targetCol"
+      type="number"
+      min="0"
+      placeholder="列"
+      class="grid-input"
+      @keyup.enter="handleSetTarget"
+    />
+    <button @click="handleSetTarget" :disabled="!canSet">设定</button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useApi } from '../composables/useApi'
 
-const targetInput = ref('')
+const { setGridTarget } = useApi()
 
-function handleSetTarget() {
-  // 预留：后续对接 POST /api/grid/set_target
-  console.log('Grid target set (placeholder):', targetInput.value)
+const targetRow = ref<number | null>(null)
+const targetCol = ref<number | null>(null)
+
+const canSet = computed(() => targetRow.value != null && targetCol.value != null)
+
+async function handleSetTarget() {
+  if (!canSet.value) return
+  try {
+    await setGridTarget(targetRow.value!, targetCol.value!)
+  } catch (e: any) {
+    console.error('Grid target set failed:', e.message)
+  }
 }
 </script>
 
@@ -29,8 +49,8 @@ function handleSetTarget() {
   background: rgba(20, 25, 36, 0.65);
   border-radius: 8px;
 }
-input {
-  width: 120px;
+.grid-input {
+  width: 54px;
   padding: 4px 8px;
   border: 1px solid #2a3040;
   border-radius: 4px;
@@ -38,9 +58,13 @@ input {
   color: #e0e6ed;
   font-size: 13px;
 }
-input:focus {
+.grid-input:focus {
   outline: none;
   border-color: #00d4ff;
+}
+.grid-input::placeholder {
+  color: #5a6a7e;
+  font-size: 12px;
 }
 button {
   padding: 4px 12px;
@@ -51,5 +75,10 @@ button {
   background: #00d4ff;
   color: #0a0e17;
   font-weight: 600;
+}
+button:disabled {
+  background: #2a3040;
+  color: #5a6a7e;
+  cursor: not-allowed;
 }
 </style>
