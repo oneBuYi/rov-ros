@@ -4,7 +4,7 @@
   <name>rov_grid</name>
   <version>0.1.0</version>
   <description>Pool wall grid monitoring for ROV wall-following inspection</description>
-  <maintainer email="wanghaojiehero@qq.com">ROV</maintainer>
+  <maintainer email="wanghaojiehero@qq.com">oneBuYi</maintainer>
   <license>MIT</license>
 
   <exec_depend>rclpy</exec_depend>

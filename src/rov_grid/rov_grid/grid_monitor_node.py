@@ -23,6 +23,7 @@ def haversine_distance(lat1: float, lon1: float,
 
     a = (math.sin(dphi / 2.0) ** 2
          + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2.0) ** 2)
+    a = min(a, 1.0)
     c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
     return R * c
 
@@ -49,6 +50,9 @@ class GridMonitorNode(Node):
                 ('control_rate', 10.0),
             ],
         )
+
+        self._distance_threshold = self.get_parameter('distance_threshold').value
+        self._depth_threshold = self.get_parameter('depth_threshold').value
 
         self._grids = {}          # {(row, col): (lat, lon, depth)}
         self._target_key = None    # (row, col) or None
@@ -119,16 +123,29 @@ class GridMonitorNode(Node):
             return
 
         for item in raw:
-            row = int(item['row'])
-            col = int(item['col'])
+            try:
+                row = int(item['row'])
+                col = int(item['col'])
+                lat = float(item['lat'])
+                lon = float(item['lon'])
+                depth_val = float(item['depth'])
+            except (KeyError, TypeError, ValueError) as e:
+                self.get_logger().error(
+                    f'Skipping malformed grid entry {item}: {e}'
+                )
+                continue
+
             key = (row, col)
             if key in self._grids:
                 self.get_logger().warning(
                     f'Duplicate grid ({row}, {col}) — overwriting'
                 )
-            self._grids[key] = (float(item['lat']),
-                                float(item['lon']),
-                                float(item['depth']))
+            self._grids[key] = (lat, lon, depth_val)
+
+        if not self._grids:
+            self.get_logger().error(
+                'No valid grids loaded after parsing — all entries were malformed'
+            )
 
     # ------------------------------------------------------------------
     # MAVROS callbacks
@@ -168,9 +185,8 @@ class GridMonitorNode(Node):
             self._current_lat, self._current_lon,
             grid_lat, grid_lon,
         )
-        depth_ok = abs(self._current_depth - grid_depth) < self.get_parameter(
-            'depth_threshold').value
-        dist_ok = dist < self.get_parameter('distance_threshold').value
+        depth_ok = abs(self._current_depth - grid_depth) < self._depth_threshold
+        dist_ok = dist < self._distance_threshold
 
         msg.data = dist_ok and depth_ok
         self._pub_in_target.publish(msg)
