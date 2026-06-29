@@ -19,6 +19,7 @@ package-lock.json
 .idea/
 
 # Claude Code
+CLAUDE.md
 .claude/
 .superpowers/
 docs/superpowers/
