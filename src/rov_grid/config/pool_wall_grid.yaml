@@ -1,0 +1,19 @@
+# Pool wall grid center points.
+# Each entry is a grid cell identified by (row, col).
+# - row: vertical index (0 = top, increasing downward)
+# - col: horizontal index (0 = left, increasing rightward)
+# - lat/lon: WGS84 decimal degrees
+# - depth: meters below water surface (positive = down)
+# Top-level key must match node's fully qualified path: /rov/grid_monitor
+rov/grid_monitor:
+  ros__parameters:
+    grids:
+      - { row: 0, col: 0, lat: 30.123456, lon: 120.123456, depth: 0.5 }
+      - { row: 0, col: 1, lat: 30.123470, lon: 120.123456, depth: 0.5 }
+      - { row: 0, col: 2, lat: 30.123484, lon: 120.123456, depth: 0.5 }
+      - { row: 1, col: 0, lat: 30.123456, lon: 120.123470, depth: 1.0 }
+      - { row: 1, col: 1, lat: 30.123470, lon: 120.123470, depth: 1.0 }
+      - { row: 1, col: 2, lat: 30.123484, lon: 120.123470, depth: 1.0 }
+    distance_threshold: 0.5
+    depth_threshold: 0.2
+    control_rate: 10.0
