@@ -1,5 +1,7 @@
 from launch import LaunchDescription
+from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
@@ -12,6 +14,18 @@ def generate_launch_description():
             'system_id': 255,
             'component_id': 190,
         }],
+        output='screen',
+    )
+
+    grid_monitor_node = Node(
+        package='rov_grid',
+        executable='grid_monitor_node',
+        parameters=[
+            PathJoinSubstitution([
+                FindPackageShare('rov_grid'),
+                'config', 'pool_wall_grid.yaml',
+            ]),
+        ],
         output='screen',
     )
 
@@ -49,6 +63,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         mavros_node,
+        grid_monitor_node,
         depth_ctrl_node,
         heading_ctrl_node,
         adhesion_ctrl_node,
