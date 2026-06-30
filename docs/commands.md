@@ -19,14 +19,20 @@ npm run build
 cd /home/jetson/whj/rov-ros
 colcon build --packages-select rov_gcs --symlink-install
 
+# 如果 colcon build 报 "No such file or directory" 错误
+# 是因为 npm run build 生成了新的哈希文件名，install 目录残留了旧软链接
+# 清掉 install 目录的 dist 再重新构建即可：
+# rm -rf install/rov_gcs/share/rov_gcs/frontend/dist/*
+# colcon build --packages-select rov_gcs --symlink-install
+
 # 构建所有包
 rm -rf build/ install/ log/ && colcon build --symlink-install
 
 # 构建指定包
-colcon build --packages-select rov_msgs
-colcon build --packages-select rov_control
-colcon build --packages-select rov_gcs
-colcon build --packages-select rov_bringup
+colcon build --packages-select rov_msgs --symlink-install
+colcon build --packages-select rov_control --symlink-install
+colcon build --packages-select rov_gcs --symlink-install
+colcon build --packages-select rov_bringup --symlink-install
 
 # 清理重新构建
 rm -rf build/ install/ log/

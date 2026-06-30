@@ -51,32 +51,29 @@
           />
         </div>
       </div>
-      <div class="hud-mid-left">
-        <GridMap />
-      </div>
       <div class="hud-mid-right">
         <ControlPanel :gamepad-connected="gamepadConnected" />
       </div>
 
-      <!-- 虚拟摇杆 - 左脸颊（水平移动） -->
+      <!-- 虚拟摇杆 - 左脸颊（前进后退/转向） -->
       <div class="hud-cheek-left">
         <VirtualJoystick
-          :axis-labels="{ up: '前进', down: '后退', left: '左移', right: '右移' }"
+          :axis-labels="{ up: '前进', down: '后退', left: '左转', right: '右转' }"
           :size="160"
           @update="onLeftJoystick"
         />
       </div>
-      <!-- 虚拟摇杆 - 右脸颊（升降/旋转） -->
+      <!-- 虚拟摇杆 - 右脸颊（升降/平移） -->
       <div class="hud-cheek-right">
         <VirtualJoystick
-          :axis-labels="{ up: '上升', down: '下降', left: '左转', right: '右转' }"
+          :axis-labels="{ up: '上升', down: '下降', left: '左移', right: '右移' }"
           :size="160"
           @update="onRightJoystick"
         />
       </div>
 
       <div class="hud-bot-left">
-        <GridStatus />
+        <GridMap />
       </div>
       <div class="hud-bot-center">
         <GridTarget />
@@ -96,7 +93,6 @@ import HeadingGauge from './components/HeadingGauge.vue'
 import TelemetryPanel from './components/TelemetryPanel.vue'
 import ControlPanel from './components/ControlPanel.vue'
 import VirtualJoystick from './components/VirtualJoystick.vue'
-import GridStatus from './components/GridStatus.vue'
 import GridTarget from './components/GridTarget.vue'
 import GridReached from './components/GridReached.vue'
 import GridMap from './components/GridMap.vue'
@@ -132,18 +128,18 @@ function onStreamError() {
 // ---- 虚拟摇杆 ----
 
 function onLeftJoystick(data: { x: number; y: number }) {
-  // 左摇杆：x=左移/右移, y=前进/后退
+  // 左摇杆：x=左转/右转, y=前进/后退（与物理手柄左摇杆一致）
   send({
     type: 'joystick',
-    data: { x: data.y, y: data.x, z: 0, r: 0, buttons: [] },
+    data: { x: data.y, y: 0, z: 0, r: data.x, buttons: [] },
   })
 }
 
 function onRightJoystick(data: { x: number; y: number }) {
-  // 右摇杆：x=左转/右转, y=上升/下降
+  // 右摇杆：x=左移/右移, y=上升/下降（与物理手柄右摇杆一致）
   send({
     type: 'joystick',
-    data: { x: 0, y: 0, z: data.y, r: data.x, buttons: [] },
+    data: { x: 0, y: data.x, z: data.y, r: 0, buttons: [] },
   })
 }
 
