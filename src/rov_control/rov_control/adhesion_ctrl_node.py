@@ -93,7 +93,11 @@ class RovAdhesionCtrlNode(Node):
         self._joystick_y = float(msg.y)
         self._joystick_z = float(msg.z)
         self._joystick_r = float(msg.r)
-        self._joystick_buttons = int(msg.buttons)
+        # 按钮位掩码隔离：只放行已知按钮，屏蔽 Pixhawk 内部定义的其他按钮
+        # 16384(1<<14)=开灯  8192(1<<13)=关灯  4096(1<<12)=增益-25%
+        #  2048(1<<11)=增益+25%    64(1<<6)=解锁     16(1<<4)=上锁
+        BTN_MASK = 0x7C50  # 16384 | 8192 | 4096 | 2048 | 64 | 16
+        self._joystick_buttons = int(msg.buttons) & BTN_MASK
         self._publish_merged()
 
     def _on_depth_hold_status(self, msg):

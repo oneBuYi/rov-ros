@@ -54,11 +54,11 @@
     <!-- Arm/Disarm -->
     <button
       class="arm-btn"
-      :class="armed ? 'armed' : 'disarmed'"
+      :class="store.telemetry.armed ? 'armed' : 'disarmed'"
       :disabled="sending"
       @click="handleArmToggle"
     >
-      {{ armed ? '🔴 Disarm' : '🟢 Arm' }}
+      {{ store.telemetry.armed ? '🔴 Disarm' : '🟢 Arm' }}
     </button>
 
     <div class="gamepad-status">
@@ -81,7 +81,6 @@ const depthTargetInput = ref(0)
 const headingTargetInput = ref(0)
 const sending = ref(false)
 const error = ref('')
-const armed = ref(false)
 
 const depthHoldEnabled = computed(
   () => store.telemetry.depth_hold_enabled
@@ -126,13 +125,12 @@ async function handleArmToggle() {
   error.value = ''
   sending.value = true
   try {
-    if (armed.value) {
+    if (store.telemetry.armed) {
       await disarm()
-      armed.value = false
     } else {
       await arm()
-      armed.value = true
     }
+    // 状态会通过 /mavros/state 遥测回传同步，无需本地切换
   } catch (e: any) {
     error.value = e.message || '操作失败'
   } finally {

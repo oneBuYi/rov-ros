@@ -12,6 +12,7 @@ export interface Telemetry {
   lat: number
   lon: number
   yaw: number
+  armed: boolean
   ros_connected: boolean
   current_grid: string
   target_grid: string
@@ -36,6 +37,7 @@ export const useTelemetryStore = defineStore('telemetry', () => {
     lat: 0,
     lon: 0,
     yaw: 0,
+    armed: false,
     ros_connected: false,
     current_grid: '',
     target_grid: '',

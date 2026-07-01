@@ -12,6 +12,7 @@ class Telemetry(BaseModel):
     lat: float = 0.0                # latitude
     lon: float = 0.0                # longitude
     yaw: float = 0.0                # current heading (degrees)
+    armed: bool = False             # vehicle armed state (from /mavros/state)
     ros_connected: bool = False     # ROS connection status
     # Grid data
     current_grid: str = ""          # current grid cell label, e.g. "R0C3"
