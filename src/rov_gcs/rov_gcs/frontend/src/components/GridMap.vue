@@ -1,6 +1,9 @@
 <template>
   <div class="grid-map" v-if="hasGrid">
-    <div class="grid-title">网格地图</div>
+    <div class="grid-title">
+      <span class="title-label">当前网格</span>
+      <span class="title-value">{{ currentGridLabel }}</span>
+    </div>
     <div
       class="grid-container"
       :style="gridStyle"
@@ -30,6 +33,14 @@ const store = useTelemetryStore()
 const hasGrid = computed(() => {
   const t = store.telemetry
   return t.grid_rows > 0 && t.grid_cols > 0
+})
+
+const currentGridLabel = computed(() => {
+  const t = store.telemetry
+  if (t.grid_current_row >= 0 && t.grid_current_col >= 0) {
+    return `R${t.grid_current_row}C${t.grid_current_col}`
+  }
+  return '---'
 })
 
 interface Cell {
@@ -99,11 +110,22 @@ function cellTooltip(row: number, col: number): string {
   font-size: 13px;
 }
 .grid-title {
-  color: #8899aa;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
+}
+.title-label {
+  color: #8899aa;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+.title-value {
+  color: #2196f3;
+  font-weight: 600;
+  font-family: monospace;
+  font-size: 13px;
 }
 .grid-container {
   display: grid;
@@ -132,11 +154,11 @@ function cellTooltip(row: number, col: number): string {
   border: 1px solid #2a3040;
 }
 .cell-current {
-  background: rgba(0, 212, 255, 0.2);
-  border: 1px solid #00d4ff;
+  background: rgba(33, 150, 243, 0.2);
+  border: 1px solid #2196f3;
 }
 .cell-current .cell-label {
-  color: #00d4ff;
+  color: #2196f3;
 }
 .cell-target {
   background: rgba(255, 217, 61, 0.2);
@@ -148,7 +170,7 @@ function cellTooltip(row: number, col: number): string {
 .cell-current-target {
   background: rgba(255, 217, 61, 0.25);
   border: 1px solid #ffd93d;
-  box-shadow: 0 0 4px rgba(0, 212, 255, 0.4);
+  box-shadow: 0 0 4px rgba(33, 150, 243, 0.4);
 }
 .cell-current-target .cell-label {
   color: #ffd93d;

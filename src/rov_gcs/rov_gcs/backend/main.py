@@ -75,6 +75,11 @@ async def _subscribe_all(rb: RosbridgeClient) -> None:
         on_heading_hold_status,
     )
     await rb.subscribe(
+        "/mavros/state",
+        "mavros_msgs/msg/State",
+        on_mavros_state,
+    )
+    await rb.subscribe(
         "/rov/camera/image_raw",
         "sensor_msgs/msg/Image",
         on_camera_image,
@@ -222,6 +227,11 @@ def _update_target_grid_label():
         )
     else:
         store.update(target_grid="")
+
+
+def on_mavros_state(msg: dict):
+    """/mavros/state -> armed status."""
+    store.update(armed=bool(msg.get("armed", False)))
 
 
 def on_camera_image(msg: dict):
