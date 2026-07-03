@@ -90,10 +90,12 @@ ros2 topic list
 # 查看话题内容
 # 当前相对高度（m）
 ros2 topic echo /mavros/global_position/rel_alt
-# 垂直推力输出（PWM）
-ros2 topic echo /rov/depth_ctrl/vertical_pwm
+# MAVROS 连接状态
+ros2 topic echo /mavros/state
+# 深度 PID 输出
+ros2 topic echo /rov/depth_ctrl/pid_output
 # 定深状态
-ros2 topic echo /rov/depth_ctrl/get_status
+ros2 topic echo /rov/depth_ctrl/status_hold
 # 航向 PID 输出
 ros2 topic echo /rov/heading_ctrl/pid_output
 # 定航状态
@@ -102,18 +104,19 @@ ros2 topic echo /rov/heading_ctrl/status_hold
 ros2 topic echo /rov/joystick_ctrl/cmd
 # 发送至飞控的控制指令
 ros2 topic echo /mavros/manual_control/send
-# 网格当前行
-ros2 topic echo /grid/current_row
-# 网格当前列
-ros2 topic echo /grid/current_col
-# 网格目标行
-ros2 topic echo /grid/target_row
-# 网格目标列
-ros2 topic echo /grid/target_col
+# 网格行数/列数
+ros2 topic echo /rov/grid/rows
+ros2 topic echo /rov/grid/cols
+# 网格当前行/列
+ros2 topic echo /rov/grid/current_row
+ros2 topic echo /rov/grid/current_col
+# 网格目标行/列
+ros2 topic echo /rov/grid/target_row
+ros2 topic echo /rov/grid/target_col
 # 是否到达目标网格
-ros2 topic echo /grid/in_target
+ros2 topic echo /rov/grid/in_target
 # 相机图像
-ros2 topic echo /camera/image_raw
+ros2 topic echo /rov/camera/image_raw
 
 # 查看 service 列表
 ros2 service list
@@ -127,6 +130,9 @@ ros2 service call /rov/depth_ctrl/toggle_hold std_srvs/srv/Trigger
 # 通过 adhesion_ctrl 切换深度保持
 ros2 service call /rov/adhesion_ctrl/toggle_depth std_srvs/srv/Trigger
 
+# 通过 adhesion_ctrl 切换航向保持
+ros2 service call /rov/adhesion_ctrl/toggle_heading std_srvs/srv/Trigger
+
 # 设定航向目标（单位：度）
 ros2 service call /rov/heading_ctrl/set_target rov_msgs/srv/SetTarget "{target: 180.0}"
 
@@ -134,7 +140,7 @@ ros2 service call /rov/heading_ctrl/set_target rov_msgs/srv/SetTarget "{target: 
 ros2 service call /rov/heading_ctrl/toggle_hold std_srvs/srv/Trigger
 
 # 设定网格目标（row, col）
-ros2 service call /grid/set_grid_target rov_msgs/srv/SetGridTarget "{row: 1, col: 2}"
+ros2 service call /rov/grid/set_grid_target rov_msgs/srv/SetGridTarget "{row: 1, col: 2}"
 ```
 
 ## Web API

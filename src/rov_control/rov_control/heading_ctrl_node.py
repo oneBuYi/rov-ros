@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.qos import qos_profile_sensor_data
 from std_msgs.msg import Float64, Float32, Bool
 from std_srvs.srv import Trigger
 from rov_msgs.srv import SetTarget
@@ -46,7 +47,7 @@ class RovHeadingCtrlNode(Node):
 
         self._sub = self.create_subscription(
             Float64, '/mavros/global_position/compass_hdg',
-            self._heading_callback, 10)
+            self._heading_callback, qos_profile_sensor_data)
 
         self._pub = self.create_publisher(
             Float32, 'heading_ctrl/pid_output', 10)

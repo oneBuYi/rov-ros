@@ -55,9 +55,31 @@ git push --force-with-lease origin HEAD
 ## 创建新分支
 
 ```bash
-# 基于当前分支创建并切换
+# 基于当前分支快速创建并切换
 git checkout -b feature/yyy
+```
 
+### 从 develop 开出新分支（远端没有）
+
+基于最新的 develop 新建一个远端不存在的分支，完整流程：
+
+```bash
+# 1. 切到 develop 并拉取最新
+git checkout develop
+git pull
+
+# 2. 创建新分支并切换
+git checkout -b feature/zzz
+
+# 3. 首次推送并关联远端
+git push -u origin feature/zzz
+
+# 之后正常开发推送即可
+git commit -am "feat: xxx"
+git push
+```
+
+```bash
 # 查看本地与远端分支
 git branch -a
 ```

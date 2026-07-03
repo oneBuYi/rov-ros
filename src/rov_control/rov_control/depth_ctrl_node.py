@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.qos import qos_profile_sensor_data
 from std_msgs.msg import Float64, Float32, Bool
 from std_srvs.srv import Trigger
 from rov_msgs.srv import SetTarget
@@ -40,7 +41,7 @@ class RovDepthCtrlNode(Node):
 
         self._sub = self.create_subscription(
             Float64, '/mavros/global_position/rel_alt',
-            self._depth_callback, 10)
+            self._depth_callback, qos_profile_sensor_data)
 
         self._pub = self.create_publisher(
             Float32, 'depth_ctrl/pid_output', 10)

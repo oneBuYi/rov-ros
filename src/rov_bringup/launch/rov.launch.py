@@ -67,5 +67,5 @@ def generate_launch_description():
         depth_ctrl_node,
         heading_ctrl_node,
         adhesion_ctrl_node,
-        camera_pub_node,
+        # camera_pub_node,
     ])
