@@ -21,7 +21,7 @@ class RovDepthCtrlNode(Node):
                 ('kd', 80.0),
                 ('out_min', -100.0),
                 ('out_max', 100.0),
-                ('control_rate', 10.0),
+                ('control_rate', 20.0),
             ]
         )
 

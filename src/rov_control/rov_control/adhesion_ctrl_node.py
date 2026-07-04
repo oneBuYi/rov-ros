@@ -62,6 +62,10 @@ class RovAdhesionCtrlNode(Node):
         self._pub = self.create_publisher(
             ManualControl, '/mavros/manual_control/send', 10)
 
+        # 定时发布，保证 manual_control 以稳定频率发送，
+        # 避免飞控因消息间隔过大而进入断续模式导致电机顿挫
+        self._pub_timer = self.create_timer(1.0 / 20.0, self._publish_merged)
+
         # --- toggle depth forwarding ---
         self._srv_toggle_depth = self.create_service(
             Trigger, 'adhesion_ctrl/toggle_depth',
