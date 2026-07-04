@@ -72,11 +72,6 @@
         />
       </div>
 
-      <!-- 十字键 - 中下方（两摇杆之间） -->
-      <div class="hud-cheek-center">
-        <DpadButtons @update="onDpadButtons" />
-      </div>
-
       <div class="hud-bot-left">
         <GridMap />
       </div>
@@ -98,7 +93,6 @@ import HeadingGauge from './components/HeadingGauge.vue'
 import TelemetryPanel from './components/TelemetryPanel.vue'
 import ControlPanel from './components/ControlPanel.vue'
 import VirtualJoystick from './components/VirtualJoystick.vue'
-import DpadButtons from './components/DpadButtons.vue'
 import GridTarget from './components/GridTarget.vue'
 import GridReached from './components/GridReached.vue'
 import GridMap from './components/GridMap.vue'
@@ -131,10 +125,9 @@ function onStreamError() {
   streamError.value = true
 }
 
-// ---- 共享状态：合并虚拟摇杆和十字键输入 ----
+// ---- 共享状态：合并虚拟摇杆输入 ----
 const leftAxes = ref({ x: 0, y: 0 })
 const rightAxes = ref({ x: 0, y: 0 })
-const dpadButtons = ref<number[]>(new Array(15).fill(0))
 
 function sendCombined() {
   // 左摇杆 y=前进/后退(x), x=左转/右转(r)
@@ -146,7 +139,7 @@ function sendCombined() {
       y: rightAxes.value.x,
       z: rightAxes.value.y,
       r: leftAxes.value.x,
-      buttons: dpadButtons.value,
+      buttons: new Array(15).fill(0),
     },
   })
 }
@@ -160,13 +153,6 @@ function onLeftJoystick(data: { x: number; y: number }) {
 
 function onRightJoystick(data: { x: number; y: number }) {
   rightAxes.value = data
-  sendCombined()
-}
-
-// ---- 十字键 ----
-
-function onDpadButtons(buttons: number[]) {
-  dpadButtons.value = buttons
   sendCombined()
 }
 
@@ -267,6 +253,9 @@ html, body {
   grid-column: 3;
   grid-row: 1;
   justify-self: end;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .hud-mid-left {
@@ -304,15 +293,6 @@ html, body {
   margin-right: 18vw;
 }
 
-/* 十字键 - 中下方（两摇杆之间） */
-.hud-cheek-center {
-  grid-column: 2;
-  grid-row: 2;
-  align-self: end;
-  justify-self: center;
-  margin-bottom: 23vh;
-}
-
 .hud-bot-left {
   grid-column: 1;
   grid-row: 3;
@@ -335,7 +315,6 @@ html, body {
 @media (max-width: 320px) {
   .hud-mid-left,
   .hud-cheek-left,
-  .hud-cheek-center,
   .hud-cheek-right {
     display: none;
   }

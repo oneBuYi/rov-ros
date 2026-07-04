@@ -51,6 +51,38 @@
       {{ headingHoldEnabled ? '关闭定航' : '开启定航' }}
     </button>
 
+    <!-- 电机增益 -->
+    <div class="ctrl-group">
+      <label>电机增益</label>
+      <div class="gain-row">
+        <button
+          class="gain-btn"
+          @pointerdown.prevent="onGainDown"
+          @pointerup.prevent="onGainUp"
+          @pointerleave.prevent="onGainUp"
+        >−</button>
+        <span class="gain-value">{{ store.telemetry.gain_level }}%</span>
+        <button
+          class="gain-btn"
+          @pointerdown.prevent="onGainUpPress"
+          @pointerup.prevent="onGainUp"
+          @pointerleave.prevent="onGainUp"
+        >+</button>
+      </div>
+    </div>
+
+    <!-- 水下灯 -->
+    <div class="ctrl-group">
+      <label>水下灯</label>
+      <button
+        class="light-btn"
+        :class="{ active: store.telemetry.light_on }"
+        @click="toggleLight"
+      >
+        {{ store.telemetry.light_on ? '🔆 开' : '🌑 关' }}
+      </button>
+    </div>
+
     <!-- Arm/Disarm -->
     <button
       class="arm-btn"
@@ -136,6 +168,40 @@ async function handleArmToggle() {
   } finally {
     sending.value = false
   }
+}
+
+// ----- gain & light -----
+
+const BTN_GAIN_UP = 11    // 1<<11 = 2048  gain +25%
+const BTN_GAIN_DOWN = 12  // 1<<12 = 4096  gain -25%
+const BTN_LIGHT_OFF = 13  // 1<<13 = 8192  light off
+const BTN_LIGHT_ON = 14   // 1<<14 = 16384 light on
+const BUTTON_COUNT = 15
+
+function sendGainLightButtons(btn: number) {
+  const arr = new Array(BUTTON_COUNT).fill(0)
+  arr[btn] = 1
+  const send = (window as any).__gcsSend
+  if (send) {
+    send({ type: 'joystick', data: { x: 0, y: 0, z: 0, r: 0, buttons: arr } })
+  }
+}
+
+function sendReleaseButtons() {
+  const send = (window as any).__gcsSend
+  if (send) {
+    send({ type: 'joystick', data: { x: 0, y: 0, z: 0, r: 0, buttons: new Array(BUTTON_COUNT).fill(0) } })
+  }
+}
+
+function onGainDown() { sendGainLightButtons(BTN_GAIN_DOWN) }
+function onGainUpPress() { sendGainLightButtons(BTN_GAIN_UP) }
+function onGainUp() { sendReleaseButtons() }
+
+function toggleLight() {
+  const btn = store.telemetry.light_on ? BTN_LIGHT_OFF : BTN_LIGHT_ON
+  sendGainLightButtons(btn)
+  setTimeout(() => sendReleaseButtons(), 50)
 }
 
 // ----- heading -----
@@ -243,5 +309,64 @@ button:disabled {
 .gamepad-status {
   font-size: 11px;
   color: #8899aa;
+}
+.gain-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gain-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #2a3040;
+  border-radius: 4px;
+  background: rgba(20, 25, 36, 0.8);
+  color: #e0e6ed;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.gain-btn:hover {
+  border-color: #4a5568;
+}
+.gain-btn:active {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: #00d4ff;
+  color: #00d4ff;
+}
+.gain-value {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: monospace;
+  color: #00d4ff;
+  min-width: 42px;
+  text-align: center;
+}
+.light-btn {
+  padding: 4px 10px;
+  border: 1px solid #2a3040;
+  border-radius: 4px;
+  background: rgba(20, 25, 36, 0.8);
+  color: #8899aa;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.light-btn:hover {
+  border-color: #4a5568;
+}
+.light-btn.active {
+  background: rgba(255, 193, 7, 0.15);
+  border-color: #ffc107;
+  color: #ffc107;
 }
 </style>

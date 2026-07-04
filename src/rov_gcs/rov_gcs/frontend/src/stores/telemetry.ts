@@ -23,6 +23,8 @@ export interface Telemetry {
   grid_current_col: number
   grid_target_row: number
   grid_target_col: number
+  gain_level: number
+  light_on: boolean
 }
 
 export const useTelemetryStore = defineStore('telemetry', () => {
@@ -48,6 +50,8 @@ export const useTelemetryStore = defineStore('telemetry', () => {
     grid_current_col: -1,
     grid_target_row: -1,
     grid_target_col: -1,
+    gain_level: 50,
+    light_on: false,
   })
 
   function updateTelemetry(data: Partial<Telemetry>) {

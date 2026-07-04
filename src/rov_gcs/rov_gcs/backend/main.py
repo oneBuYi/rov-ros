@@ -261,6 +261,7 @@ def on_camera_image(msg: dict):
 
         _, jpeg = cv2.imencode(".jpg", arr, [cv2.IMWRITE_JPEG_QUALITY, 70])
         store.latest_frame = jpeg.tobytes()
+        store.frame_event.set()  # wake up MJPEG stream generator
     except Exception:
         logger.exception("Failed to process camera image")
 
@@ -271,8 +272,10 @@ async def joystick_publisher():
     """Publish joystick data from queue to ROS via rosbridge.
 
     Handles timeout protection: if no data for 500ms, send zeros.
+    Tracks motor gain level and light state from button bit transitions.
     """
     last_time = time.time()
+    prev_buttons = 0
     while True:
         try:
             # Wait up to 500ms for next joystick frame
@@ -316,6 +319,21 @@ async def joystick_publisher():
             )
         except Exception as e:
             logger.error(f"Failed to publish joystick: {e}")
+
+        # Track motor gain and light state from button bit rising edges
+        btn = msg["buttons"]
+        rising = btn & ~prev_buttons  # 0→1 transitions this frame
+        prev_buttons = btn
+
+        snap = store.snapshot()
+        if rising & (1 << 11):  # gain +25%
+            store.update(gain_level=min(snap.gain_level + 25, 100))
+        if rising & (1 << 12):  # gain -25%
+            store.update(gain_level=max(snap.gain_level - 25, 25))
+        if rising & (1 << 13):  # light off
+            store.update(light_on=False)
+        if rising & (1 << 14):  # light on
+            store.update(light_on=True)
 
 
 # ----- lifecycle -----
@@ -418,13 +436,19 @@ async def video_stream():
 
     async def generate():
         while True:
+            # Wait for next frame; timeout keeps loop alive even if
+            # camera temporarily stops publishing
+            try:
+                await asyncio.wait_for(store.frame_event.wait(), timeout=1.0)
+            except asyncio.TimeoutError:
+                continue
+            store.frame_event.clear()
             frame = store.latest_frame
             if frame is not None:
                 yield (
                     b"--frame\r\n"
                     b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
                 )
-            await asyncio.sleep(0.066)  # ~15 fps max
 
     return StreamingResponse(
         generate(),

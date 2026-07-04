@@ -24,6 +24,8 @@ class Telemetry(BaseModel):
     grid_current_col: int = -1      # current ROV cell col (-1 = none)
     grid_target_row: int = -1       # target cell row (-1 = none)
     grid_target_col: int = -1       # target cell col (-1 = none)
+    gain_level: int = 50            # motor gain level (percent)
+    light_on: bool = False          # underwater light state
 
 
 class SetDepthTargetRequest(BaseModel):
