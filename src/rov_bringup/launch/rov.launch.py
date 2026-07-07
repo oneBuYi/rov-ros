@@ -62,7 +62,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        # mavros_node,
+        mavros_node,
         # grid_monitor_node,
         depth_ctrl_node,
         heading_ctrl_node,

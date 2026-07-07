@@ -256,6 +256,7 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
 
 .hud-mid-left {
