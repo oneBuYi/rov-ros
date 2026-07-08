@@ -25,7 +25,6 @@ setup(
     entry_points={
         'console_scripts': [
             'camera_pub_node = rov_sensor.camera_pub_node:main',
-            'h264_udp_node = rov_sensor.h264_udp_node:main',
         ],
     },
 )

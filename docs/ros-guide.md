@@ -66,15 +66,8 @@ ros2 run rov_gcs gcs_backend
 # 网格监测节点（泳池网格定位）
 ros2 run rov_grid grid_monitor_node --ros-args -p grid_config:=src/rov_grid/config/pool_wall_grid.yaml
 
-# 相机发布节点（MJPEG，默认 /dev/video0 640x480 15fps）
+# 相机发布节点（MJPEG 直通，默认 /dev/video0 640x480 15fps）
 ros2 run rov_sensor camera_pub_node
-# 指定 UDP 转发目标
-ros2 run rov_sensor camera_pub_node --ros-args -p gcs_url:=udp://192.168.1.100:5600
-
-# H.264 UDP 转发节点（默认 /dev/video1 640x480 15fps → 192.168.3.11:5600）
-ros2 run rov_sensor h264_udp_node
-# 自定义参数
-ros2 run rov_sensor h264_udp_node --ros-args -p host:=192.168.1.100 -p port:=5000 -p width:=1280 -p height:=720 -p framerate:=25
 
 # 快速启动 Web 上位机（rosbridge + uvicorn，不使用 launch）
 ros2 run rosbridge_server rosbridge_websocket --ros-args -p port:=9090 -p address:=0.0.0.0 &
@@ -116,7 +109,7 @@ ros2 topic echo /rov/grid/target_col
 # 是否到达目标网格
 ros2 topic echo /rov/grid/in_target
 # 相机图像
-ros2 topic echo /rov/camera/image_raw
+ros2 topic echo /rov/camera/image_raw/compressed
 
 # 查看 service 列表
 ros2 service list
