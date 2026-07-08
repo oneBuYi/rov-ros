@@ -3,6 +3,7 @@ import asyncio
 import base64
 import logging
 import os
+import sys
 import time
 from contextlib import asynccontextmanager
 from typing import Optional
@@ -466,15 +467,29 @@ if os.path.isdir(_frontend_dist):
     logger.info(f"Serving frontend from {_frontend_dist}")
 
 
+# Path to SSL certs (relative to this file, works in dev and production)
+_CERTS_DIR = os.path.join(os.path.dirname(__file__), "certs")
+_CERT_FILE = os.path.join(_CERTS_DIR, "cert.pem")
+_KEY_FILE = os.path.join(_CERTS_DIR, "key.pem")
+
+
 def main():
     """CLI entry point."""
-    uvicorn.run(
-        "rov_gcs.backend.main:app",
+    kwargs: dict = dict(
         host="0.0.0.0",
         port=8000,
         log_level="info",
         reload=False,
     )
+
+    if os.path.isfile(_CERT_FILE) and os.path.isfile(_KEY_FILE):
+        kwargs["ssl_certfile"] = _CERT_FILE
+        kwargs["ssl_keyfile"] = _KEY_FILE
+        logger.info(f"HTTPS enabled, cert={_CERT_FILE}")
+    else:
+        logger.warning(f"SSL certs not found at {_CERTS_DIR}, running HTTP only")
+
+    uvicorn.run("rov_gcs.backend.main:app", **kwargs)
 
 
 if __name__ == "__main__":

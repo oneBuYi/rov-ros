@@ -5,3 +5,10 @@ declare module '*.vue' {
   const component: DefineComponent<{}, {}, any>
   export default component
 }
+
+// File System Access API 类型补充
+declare global {
+  interface Window {
+    showDirectoryPicker(options?: { mode?: 'read' | 'readwrite' }): Promise<FileSystemDirectoryHandle>
+  }
+}

@@ -7,6 +7,23 @@ source /opt/ros/foxy/setup.bash
 source install/setup.bash
 ```
 
+## SSL 证书（HTTPS）
+
+File System Access API（Web 上位机的文件夹选择功能）要求安全上下文（HTTPS 或 localhost）。
+从其他电脑远程访问时必须启用 HTTPS，需要生成自签名证书。**证书只需生成一次**，有效期 10 年。
+
+```bash
+# 生成自签名 SSL 证书
+mkdir -p src/rov_gcs/rov_gcs/backend/certs
+openssl req -x509 -newkey rsa:2048 \
+  -keyout src/rov_gcs/rov_gcs/backend/certs/key.pem \
+  -out src/rov_gcs/rov_gcs/backend/certs/cert.pem \
+  -days 3650 -nodes \
+  -subj "/CN=rov-gcs"
+```
+
+> **注意**：`*.pem` 已加入 `.gitignore`，`git clone` 后需重新生成。`colcon build` 会将证书随包一起安装。
+
 ## 构建
 
 ```bash
@@ -41,8 +58,8 @@ source install/setup.bash && ros2 launch rov_bringup rov.launch.py
 # 启动 Web 上位机（rosbridge + FastAPI）
 source install/setup.bash && ros2 launch rov_gcs gcs.launch.py
 
-# 浏览器打开
-# http://192.168.137.100:8000
+# 浏览器打开（HTTPS，首次需接受自签名证书警告）
+# https://192.168.137.100:8000
 ```
 
 ### 单独启动各个组件
@@ -147,21 +164,21 @@ ros2 service call /rov/grid/set_grid_target rov_msgs/srv/SetGridTarget "{row: 1,
 
 ```bash
 # 获取遥测快照
-curl http://localhost:8000/api/telemetry
+curl -k https://192.168.137.100:8000/api/telemetry
 
 # 设定目标深度（m）
-curl -X POST http://localhost:8000/api/depth/set_target -H 'Content-Type: application/json' -d '{"target": 2.0}'
+curl -k -X POST https://192.168.137.100:8000/api/depth/set_target -H 'Content-Type: application/json' -d '{"target": 2.0}'
 
 # 切换定深
-curl -X POST http://localhost:8000/api/depth/hold
+curl -k -X POST https://192.168.137.100:8000/api/depth/hold
 
 # 设定目标航向（度）
-curl -X POST http://localhost:8000/api/heading/set_target -H 'Content-Type: application/json' -d '{"target": 180}'
+curl -k -X POST https://192.168.137.100:8000/api/heading/set_target -H 'Content-Type: application/json' -d '{"target": 180}'
 
 # 切换定航
-curl -X POST http://localhost:8000/api/heading/hold
+curl -k -X POST https://192.168.137.100:8000/api/heading/hold
 
 # WebSocket 测试（需安装 wscat: npm i -g wscat）
-wscat -c ws://localhost:8000/ws
+wscat -c wss://192.168.137.100:8000/ws
 ```
 

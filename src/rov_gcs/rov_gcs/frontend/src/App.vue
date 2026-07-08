@@ -77,6 +77,7 @@
       </div>
       <div class="hud-bot-center">
         <GridTarget />
+        <DataLogger />
       </div>
       <div class="hud-bot-right">
         <GridReached />
@@ -96,6 +97,7 @@ import VirtualJoystick from './components/VirtualJoystick.vue'
 import GridTarget from './components/GridTarget.vue'
 import GridReached from './components/GridReached.vue'
 import GridMap from './components/GridMap.vue'
+import DataLogger from './components/DataLogger.vue'
 import { useWebSocket } from './composables/useWebSocket'
 import { useGamepad } from './composables/useGamepad'
 import { useTelemetryStore } from './stores/telemetry'
@@ -113,7 +115,8 @@ watch(rosConnected, (connected) => {
   }
 })
 
-const wsUrl = `ws://${window.location.host}/ws`
+const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
+const wsUrl = `${wsProtocol}://${window.location.host}/ws`
 const { connect, close, send } = useWebSocket(wsUrl)
 
 ;(window as any).__gcsSend = send
@@ -304,6 +307,10 @@ html, body {
   grid-column: 2;
   grid-row: 3;
   justify-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
 }
 
 .hud-bot-right {

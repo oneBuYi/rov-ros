@@ -359,7 +359,25 @@ git clone https://gitee.com/oneBuYi/rov-ros.git
 
 ## 8. 构建项目
 
-### 8.1 完整构建
+### 8.1 生成 SSL 证书（HTTPS）
+
+远程浏览器访问 Web 上位机时，File System Access API（文件夹选择功能）要求 HTTPS。需要生成自签名证书，**只需生成一次**（有效期 10 年）。
+
+```bash
+cd ~/rov-ros
+mkdir -p src/rov_gcs/rov_gcs/backend/certs
+openssl req -x509 -newkey rsa:2048 \
+  -keyout src/rov_gcs/rov_gcs/backend/certs/key.pem \
+  -out src/rov_gcs/rov_gcs/backend/certs/cert.pem \
+  -days 3650 -nodes \
+  -subj "/CN=rov-gcs"
+```
+
+> **注意**：`*.pem` 已加入 `.gitignore`，重新 `git clone` 后需重新执行上述命令。`colcon build` 会自动将证书随包安装。
+
+浏览器首次访问 `https://...` 时会提示证书不安全（自签名），点击 **"高级" → "继续访问"** 即可，只需确认一次。
+
+### 8.2 完整构建
 
 ```bash
 cd ~/ros2_ws
@@ -380,7 +398,7 @@ colcon build --paths ~/rov-ros/src/*
 source install/setup.bash
 ```
 
-### 8.2 单独构建某个包
+### 8.3 单独构建某个包
 
 ```bash
 # 先构建消息包
@@ -396,7 +414,7 @@ colcon build --paths ~/rov-ros/src/rov_bringup
 colcon build --paths ~/rov-ros/src/rov_gcs
 ```
 
-### 8.3 清理并重新构建
+### 8.4 清理并重新构建
 
 ```bash
 rm -rf build/ install/ log/
