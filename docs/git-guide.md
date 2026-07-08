@@ -14,7 +14,7 @@ git checkout develop
 
 ```bash
 # 拉取远端最新信息
-git fetch --all
+git fetch -a
 
 # 查看 develop 有没有新提交（HEAD 即当前分支）
 git log HEAD..origin/develop
