@@ -182,3 +182,62 @@ curl -k -X POST https://192.168.137.100:8000/api/heading/hold
 wscat -c wss://192.168.137.100:8000/ws
 ```
 
+## 浏览器单独获取视频
+
+`/api/video/stream` 返回 MJPEG 流（`multipart/x-mixed-replace`），无需前端界面即可在各种场景下获取视频。
+
+### 方式一：浏览器直接打开
+
+在浏览器地址栏输入以下 URL，即可看到实时视频流：
+
+```
+https://192.168.137.100:8000/api/video/stream
+```
+
+> 首次访问 HTTPS 自签名证书会有安全警告，点击"高级"→"继续访问"即可。
+
+### 方式二：HTML `<img>` 标签嵌入
+
+```html
+<img src="https://192.168.137.100:8000/api/video/stream"
+     alt="ROV Video Stream"
+     style="width: 640px; height: 480px;" />
+```
+
+> 浏览器 `<img>` 标签原生支持 MJPEG 流，无需 JavaScript 或 WebSocket。
+
+### 方式三：命令行工具
+
+```bash
+# wget 拉取单帧 JPEG（配合 --no-check-certificate 跳过证书验证）
+wget --no-check-certificate -O frame.jpg https://192.168.137.100:8000/api/video/stream
+
+# ffplay 实时播放
+ffplay -f mjpeg https://192.168.137.100:8000/api/video/stream
+
+# curl 持续拉取 MJPEG 流
+curl -k -N https://192.168.137.100:8000/api/video/stream
+```
+
+### 方式四：Python 脚本获取
+
+```python
+import requests
+
+# 获取单帧（MJPEG 流会持续返回数据，设置 stream=True 手动读取第一帧）
+resp = requests.get("https://192.168.137.100:8000/api/video/stream",
+                    stream=True, verify=False)
+boundary = b"--frame\r\n"
+chunks = resp.iter_content(chunk_size=1024)
+body = b""
+for chunk in chunks:
+    body += chunk
+    if b"\r\n\r\n" in body and body.startswith(boundary):
+        # 去掉 boundary 和 headers，剩余部分是 JPEG 数据
+        _, jpeg_data = body.split(b"\r\n\r\n", 1)
+        jpeg_data = jpeg_data.rsplit(b"\r\n", 1)[0]
+        with open("frame.jpg", "wb") as f:
+            f.write(jpeg_data)
+        break
+```
+
