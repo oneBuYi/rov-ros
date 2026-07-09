@@ -56,7 +56,6 @@ def generate_launch_description():
             'height': 480,
             'framerate': 15,
             'publish_rate': 15.0,
-            # 'gcs_url': 'udp-b://@0.0.0.0:5600',
         }],
         output='screen',
     )

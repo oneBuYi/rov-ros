@@ -8,8 +8,6 @@ import time
 from contextlib import asynccontextmanager
 from typing import Optional
 
-import cv2
-import numpy as np
 import uvicorn
 from ament_index_python.packages import get_package_share_directory
 from fastapi import FastAPI
@@ -81,8 +79,8 @@ async def _subscribe_all(rb: RosbridgeClient) -> None:
         on_mavros_state,
     )
     await rb.subscribe(
-        "/rov/camera/image_raw",
-        "sensor_msgs/msg/Image",
+        "/rov/camera/image_raw/compressed",
+        "sensor_msgs/msg/CompressedImage",
         on_camera_image,
     )
     # Grid topics
@@ -236,33 +234,15 @@ def on_mavros_state(msg: dict):
 
 
 def on_camera_image(msg: dict):
-    """/rov/camera/image_raw -> decode raw BGR, compress to JPEG, store."""
+    """/rov/camera/image_raw/compressed -> store JPEG bytes directly."""
     try:
         data_b64 = msg.get("data", "")
         if not data_b64:
             return
 
-        raw = base64.b64decode(data_b64)
-        width = msg.get("width", 640)
-        height = msg.get("height", 480)
-        encoding = msg.get("encoding", "bgr8")
-
-        if encoding in ("bgr8", "rgb8"):
-            channels = 3
-        elif encoding == "mono8":
-            channels = 1
-        else:
-            logger.warning(f"Unsupported image encoding: {encoding}")
-            return
-
-        arr = np.frombuffer(raw, dtype=np.uint8).reshape((height, width, channels))
-
-        if encoding == "rgb8":
-            arr = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
-
-        _, jpeg = cv2.imencode(".jpg", arr, [cv2.IMWRITE_JPEG_QUALITY, 70])
-        store.latest_frame = jpeg.tobytes()
-        store.frame_event.set()  # wake up MJPEG stream generator
+        jpeg = base64.b64decode(data_b64)
+        store.latest_frame = jpeg
+        store.frame_event.set()
     except Exception:
         logger.exception("Failed to process camera image")
 
