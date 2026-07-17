@@ -93,8 +93,11 @@ git checkout develop
 # 拉取最新
 git pull
 
-# 合并 feature 分支
-git merge feature/gcs
+# 合并各 feature 分支（使用远端分支）
+git merge origin/feature/control
+git merge origin/feature/gcs
+git merge origin/feature/grid
+git merge origin/feature/video
 
 # 推送
 git push origin develop
