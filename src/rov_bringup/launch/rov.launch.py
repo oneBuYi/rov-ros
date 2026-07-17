@@ -51,7 +51,7 @@ def generate_launch_description():
         package='rov_sensor',
         executable='camera_pub_node',
         parameters=[{
-            'device': '/dev/video0',
+            'device': '/dev/v4l/by-id/usb-H264_USB_Camera_H264_USB_Camera_2020032801-video-index0',
             'width': 640,
             'height': 480,
             'framerate': 15,
@@ -66,5 +66,5 @@ def generate_launch_description():
         depth_ctrl_node,
         heading_ctrl_node,
         adhesion_ctrl_node,
-        # camera_pub_node,
+        camera_pub_node,
     ])
