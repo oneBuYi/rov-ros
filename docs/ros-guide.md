@@ -86,6 +86,9 @@ ros2 run rov_grid grid_monitor_node --ros-args -p grid_config:=src/rov_grid/conf
 # 相机发布节点（MJPEG 直通，默认 /dev/video0 640x480 15fps）
 ros2 run rov_sensor camera_pub_node
 
+# UGPS 桥接节点（UDP→UART NMEA 过滤转发，默认 :52120→/dev/ttyTHS1 38400）
+ros2 run rov_sensor ugps_bridge_node
+
 # 快速启动 Web 上位机（rosbridge + uvicorn，不使用 launch）
 ros2 run rosbridge_server rosbridge_websocket --ros-args -p port:=9090 -p address:=0.0.0.0 &
 python3 -m uvicorn rov_gcs.backend.main:app --host 0.0.0.0 --port 8000

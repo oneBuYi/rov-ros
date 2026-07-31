@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'camera_pub_node = rov_sensor.camera_pub_node:main',
+            'ugps_bridge_node = rov_sensor.ugps_bridge_node:main',
         ],
     },
 )

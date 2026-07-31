@@ -60,6 +60,20 @@ def generate_launch_description():
         output='screen',
     )
 
+    ugps_bridge_node = Node(
+        package='rov_sensor',
+        executable='ugps_bridge_node',
+        parameters=[{
+            'udp_port': 52120,
+            'uart_port': '/dev/ttyTHS1',
+            'baudrate': 38400,
+            'target_device_id': '019496',
+            'poll_rate': 100.0,
+            'status_interval_sec': 10.0,
+        }],
+        output='screen',
+    )
+
     return LaunchDescription([
         mavros_node,
         # grid_monitor_node,
@@ -67,4 +81,5 @@ def generate_launch_description():
         heading_ctrl_node,
         adhesion_ctrl_node,
         camera_pub_node,
+        ugps_bridge_node,
     ])
