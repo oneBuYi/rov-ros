@@ -26,6 +26,14 @@ class Telemetry(BaseModel):
     grid_target_col: int = -1       # target cell col (-1 = none)
     gain_level: int = 50            # motor gain level (percent)
     light_on: bool = False          # underwater light state
+    # PID gains for depth control
+    depth_kp: float = 100.0
+    depth_ki: float = 40.0
+    depth_kd: float = 80.0
+    # PID gains for heading control
+    heading_kp: float = 80.0
+    heading_ki: float = 20.0
+    heading_kd: float = 40.0
 
 
 class SetDepthTargetRequest(BaseModel):
@@ -52,3 +60,9 @@ class SetGridTargetRequest(BaseModel):
 class ApiResponse(BaseModel):
     success: bool
     message: str
+
+
+class SetPIDGainsRequest(BaseModel):
+    kp: float = Field(..., ge=0.0, description="proportional gain")
+    ki: float = Field(..., ge=0.0, description="integral gain")
+    kd: float = Field(..., ge=0.0, description="derivative gain")

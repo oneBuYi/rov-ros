@@ -80,5 +80,43 @@ export function useApi() {
     return request('POST', '/disarm')
   }
 
-  return { setDepthTarget, toggleDepthHold, setHeadingTarget, toggleHeadingHold, setGridTarget, arm, disarm }
+  // ----- PID gains -----
+
+  async function setDepthPIDGains(kp: number, ki: number, kd: number) {
+    const result = await request('POST', '/depth/pid_gains', { kp, ki, kd })
+    if (result.success) {
+      store.updateTelemetry({ depth_kp: kp, depth_ki: ki, depth_kd: kd })
+    }
+    return result
+  }
+
+  async function resetDepthPIDGains() {
+    return request('POST', '/depth/pid_reset')
+  }
+
+  async function setHeadingPIDGains(kp: number, ki: number, kd: number) {
+    const result = await request('POST', '/heading/pid_gains', { kp, ki, kd })
+    if (result.success) {
+      store.updateTelemetry({ heading_kp: kp, heading_ki: ki, heading_kd: kd })
+    }
+    return result
+  }
+
+  async function resetHeadingPIDGains() {
+    return request('POST', '/heading/pid_reset')
+  }
+
+  return {
+    setDepthTarget,
+    toggleDepthHold,
+    setHeadingTarget,
+    toggleHeadingHold,
+    setGridTarget,
+    arm,
+    disarm,
+    setDepthPIDGains,
+    resetDepthPIDGains,
+    setHeadingPIDGains,
+    resetHeadingPIDGains,
+  }
 }

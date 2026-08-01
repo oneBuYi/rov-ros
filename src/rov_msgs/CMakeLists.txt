@@ -7,6 +7,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetTarget.srv"
   "srv/SetGridTarget.srv"
+  "srv/SetPIDGains.srv"
 )
 
 ament_package()

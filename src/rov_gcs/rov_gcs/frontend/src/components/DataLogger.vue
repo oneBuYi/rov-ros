@@ -13,10 +13,23 @@
       </button>
     </div>
 
+    <!-- 勾选框 -->
+    <div class="logger-row checkboxes">
+      <label class="checkbox-label">
+        <input type="checkbox" v-model="savePosition" />
+        <span>定位</span>
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" v-model="saveImage" />
+        <span>图像</span>
+      </label>
+    </div>
+
     <!-- 记录按钮 -->
     <div class="logger-row save-row">
       <button
         class="logger-btn save-btn"
+        :disabled="!savePosition && !saveImage"
         @click="saveRecord"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -47,6 +60,9 @@ const folderName = ref('选择目录')
 const lastStatus = ref('')
 const lastStatusOk = ref(true)
 let statusTimer: ReturnType<typeof setTimeout> | null = null
+
+const savePosition = ref(true)
+const saveImage = ref(false)
 
 /** 显示状态，3 秒后自动消失 */
 function showStatus(msg: string, ok: boolean) {
@@ -102,11 +118,11 @@ async function selectFolder() {
   }
 }
 
-/** 生成时间戳文件名 (不含冒号，兼容 Windows) */
-function makeTimestampName(): string {
+/** 生成时间戳文件名前缀 (不含冒号，兼容 Windows) */
+function makeTimestampPrefix(): string {
   const now = new Date()
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `rov_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.csv`
+  return `rov_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
 }
 
 /** 生成 CSV 内容 */
@@ -117,8 +133,7 @@ function makeCsvContent(): string {
 }
 
 /** 通过 <a download> 下载文件 (非安全上下文的回退方案) */
-function downloadFallback(fileName: string, content: string) {
-  const blob = new Blob([content], { type: 'text/csv;charset=utf-8' })
+function downloadFallback(fileName: string, blob: Blob) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -130,34 +145,90 @@ function downloadFallback(fileName: string, content: string) {
   URL.revokeObjectURL(url)
 }
 
-/** 保存一条记录 */
-async function saveRecord() {
-  const fileName = makeTimestampName()
-  const content = makeCsvContent()
-
+/** 写入文件（优先用 File System Access API，否则下载回退） */
+async function writeFile(fileName: string, blob: Blob) {
   // 如果已选择了目录（File System Access API 模式），写入该目录
   if (dirHandle.value) {
     try {
       const fileHandle = await dirHandle.value.getFileHandle(fileName, { create: true })
       const writable = await fileHandle.createWritable({ keepExistingData: false })
-      await writable.write(content)
+      await writable.write(blob)
       await writable.close()
-
-      showStatus(`已保存 → ${fileName}`, true)
-      return
+      return true
     } catch (err) {
       console.error('写入目录失败，回退到下载:', err)
       // 目录写入失败，回退到下载方式
     }
   }
 
-  // 安全上下文不可用或未选择目录时，通过浏览器下载
+  // fallback：浏览器下载
   try {
-    downloadFallback(fileName, content)
-    showStatus(`已下载 → ${fileName}`, true)
+    downloadFallback(fileName, blob)
+    return true
   } catch (err) {
     console.error('下载失败:', err)
-    showStatus('保存失败', false)
+    return false
+  }
+}
+
+/** 保存定位 CSV */
+async function savePositionCsv(prefix: string): Promise<string | null> {
+  const fileName = `${prefix}.csv`
+  const content = makeCsvContent()
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8' })
+  const ok = await writeFile(fileName, blob)
+  return ok ? fileName : null
+}
+
+/** 保存图像 JPEG */
+async function saveImageJpeg(prefix: string): Promise<string | null> {
+  try {
+    const res = await fetch('/api/video/snapshot')
+    if (!res.ok) {
+      // 204 No Content 或其它错误 — 没有可用的帧
+      return null
+    }
+    const blob = await res.blob()
+    const fileName = `${prefix}.jpg`
+    const ok = await writeFile(fileName, blob)
+    return ok ? fileName : null
+  } catch (err) {
+    console.error('获取图像快照失败:', err)
+    return null
+  }
+}
+
+/** 保存一条记录 */
+async function saveRecord() {
+  const prefix = makeTimestampPrefix()
+
+  const saved: string[] = []
+  const errors: string[] = []
+
+  if (savePosition.value) {
+    const name = await savePositionCsv(prefix)
+    if (name) {
+      saved.push(name)
+    } else {
+      errors.push('定位')
+    }
+  }
+
+  if (saveImage.value) {
+    const name = await saveImageJpeg(prefix)
+    if (name) {
+      saved.push(name)
+    } else {
+      errors.push('图像（可能尚未收到视频帧）')
+    }
+  }
+
+  if (saved.length > 0) {
+    showStatus(`已保存 → ${saved.join(', ')}`, true)
+  } else if (errors.length > 0) {
+    showStatus(`保存失败: ${errors.join('; ')}`, false)
+  } else {
+    showStatus('未选择任何保存项', false)
   }
 }
 </script>
@@ -220,6 +291,31 @@ async function saveRecord() {
 
 .save-row {
   position: relative;
+}
+
+.checkboxes {
+  gap: 6px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: #c8d2dc;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.checkbox-label:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.checkbox-label input[type="checkbox"] {
+  accent-color: #34d399;
+  cursor: pointer;
 }
 
 .status-text {

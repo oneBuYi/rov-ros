@@ -2,7 +2,7 @@
   <div class="status-bar">
     <span class="indicator">
       <span class="dot" :class="rosConnected ? 'green' : 'red'"></span>
-      ROS
+      水下机器人
     </span>
     <span class="hold-badge" :class="depthHoldEnabled ? 'active' : ''">
       定深

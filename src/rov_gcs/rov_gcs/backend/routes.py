@@ -7,6 +7,7 @@ from .models import (
     SetDepthTargetRequest,
     SetHeadingTargetRequest,
     SetGridTargetRequest,
+    SetPIDGainsRequest,
 )
 from .telemetry import store
 
@@ -190,6 +191,99 @@ async def disarm():
         )
         success = result.get("success", False)
         message = result.get("message", "Disarm command sent")
+        return ApiResponse(success=success, message=message)
+    except RuntimeError as e:
+        raise HTTPException(status_code=504, detail=str(e))
+
+
+# ----- PID gain control -----
+
+
+@router.post("/depth/pid_gains", response_model=ApiResponse)
+async def set_depth_pid_gains(req: SetPIDGainsRequest):
+    """Set depth PID gains via rosbridge service call."""
+    from .main import get_rosbridge
+
+    rb = get_rosbridge()
+    if not rb or not rb.connected:
+        raise HTTPException(status_code=503, detail="ROS not connected")
+
+    try:
+        result = await rb.call_service(
+            service="/rov/depth_ctrl/set_pid_gains",
+            args={"kp": req.kp, "ki": req.ki, "kd": req.kd},
+        )
+        success = result.get("success", False)
+        message = result.get("message", "")
+        if success:
+            store.update(depth_kp=req.kp, depth_ki=req.ki, depth_kd=req.kd)
+        return ApiResponse(success=success, message=message)
+    except RuntimeError as e:
+        raise HTTPException(status_code=504, detail=str(e))
+
+
+@router.post("/depth/pid_reset", response_model=ApiResponse)
+async def reset_depth_pid_gains():
+    """Reset depth PID gains to defaults."""
+    from .main import get_rosbridge
+
+    rb = get_rosbridge()
+    if not rb or not rb.connected:
+        raise HTTPException(status_code=503, detail="ROS not connected")
+
+    try:
+        result = await rb.call_service(
+            service="/rov/depth_ctrl/reset_pid_gains",
+            args={},
+        )
+        success = result.get("success", False)
+        message = result.get("message", "")
+        return ApiResponse(success=success, message=message)
+    except RuntimeError as e:
+        raise HTTPException(status_code=504, detail=str(e))
+
+
+@router.post("/heading/pid_gains", response_model=ApiResponse)
+async def set_heading_pid_gains(req: SetPIDGainsRequest):
+    """Set heading PID gains via rosbridge service call."""
+    from .main import get_rosbridge
+
+    rb = get_rosbridge()
+    if not rb or not rb.connected:
+        raise HTTPException(status_code=503, detail="ROS not connected")
+
+    try:
+        result = await rb.call_service(
+            service="/rov/heading_ctrl/set_pid_gains",
+            args={"kp": req.kp, "ki": req.ki, "kd": req.kd},
+        )
+        success = result.get("success", False)
+        message = result.get("message", "")
+        if success:
+            store.update(
+                heading_kp=req.kp, heading_ki=req.ki, heading_kd=req.kd
+            )
+        return ApiResponse(success=success, message=message)
+    except RuntimeError as e:
+        raise HTTPException(status_code=504, detail=str(e))
+
+
+@router.post("/heading/pid_reset", response_model=ApiResponse)
+async def reset_heading_pid_gains():
+    """Reset heading PID gains to defaults."""
+    from .main import get_rosbridge
+
+    rb = get_rosbridge()
+    if not rb or not rb.connected:
+        raise HTTPException(status_code=503, detail="ROS not connected")
+
+    try:
+        result = await rb.call_service(
+            service="/rov/heading_ctrl/reset_pid_gains",
+            args={},
+        )
+        success = result.get("success", False)
+        message = result.get("message", "")
         return ApiResponse(success=success, message=message)
     except RuntimeError as e:
         raise HTTPException(status_code=504, detail=str(e))
