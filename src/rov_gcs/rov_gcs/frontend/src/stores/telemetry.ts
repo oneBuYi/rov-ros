@@ -25,6 +25,12 @@ export interface Telemetry {
   grid_target_col: number
   gain_level: number
   light_on: boolean
+  depth_kp: number
+  depth_ki: number
+  depth_kd: number
+  heading_kp: number
+  heading_ki: number
+  heading_kd: number
 }
 
 export const useTelemetryStore = defineStore('telemetry', () => {
@@ -52,6 +58,12 @@ export const useTelemetryStore = defineStore('telemetry', () => {
     grid_target_col: -1,
     gain_level: 50,
     light_on: false,
+    depth_kp: 100.0,
+    depth_ki: 40.0,
+    depth_kd: 80.0,
+    heading_kp: 80.0,
+    heading_ki: 20.0,
+    heading_kd: 40.0,
   })
 
   function updateTelemetry(data: Partial<Telemetry>) {

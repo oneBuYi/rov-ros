@@ -119,6 +119,38 @@ async def _subscribe_all(rb: RosbridgeClient) -> None:
         "std_msgs/msg/Bool",
         on_grid_in_target,
     )
+    # Depth PID gains
+    await rb.subscribe(
+        "/rov/depth_ctrl/pid_kp",
+        "std_msgs/msg/Float32",
+        on_depth_kp,
+    )
+    await rb.subscribe(
+        "/rov/depth_ctrl/pid_ki",
+        "std_msgs/msg/Float32",
+        on_depth_ki,
+    )
+    await rb.subscribe(
+        "/rov/depth_ctrl/pid_kd",
+        "std_msgs/msg/Float32",
+        on_depth_kd,
+    )
+    # Heading PID gains
+    await rb.subscribe(
+        "/rov/heading_ctrl/pid_kp",
+        "std_msgs/msg/Float32",
+        on_heading_kp,
+    )
+    await rb.subscribe(
+        "/rov/heading_ctrl/pid_ki",
+        "std_msgs/msg/Float32",
+        on_heading_ki,
+    )
+    await rb.subscribe(
+        "/rov/heading_ctrl/pid_kd",
+        "std_msgs/msg/Float32",
+        on_heading_kd,
+    )
 
 
 # ----- rosbridge topic callbacks -----
@@ -204,6 +236,38 @@ def on_grid_target_col(msg: dict):
 def on_grid_in_target(msg: dict):
     """/rov/grid/in_target -> grid reached status."""
     store.update(grid_reached=bool(msg.get("data", False)))
+
+
+# ----- PID gain callbacks -----
+
+def on_depth_kp(msg: dict):
+    """Store depth kp gain."""
+    store.update(depth_kp=round(msg.get("data", 0.0), 1))
+
+
+def on_depth_ki(msg: dict):
+    """Store depth ki gain."""
+    store.update(depth_ki=round(msg.get("data", 0.0), 1))
+
+
+def on_depth_kd(msg: dict):
+    """Store depth kd gain."""
+    store.update(depth_kd=round(msg.get("data", 0.0), 1))
+
+
+def on_heading_kp(msg: dict):
+    """Store heading kp gain."""
+    store.update(heading_kp=round(msg.get("data", 0.0), 1))
+
+
+def on_heading_ki(msg: dict):
+    """Store heading ki gain."""
+    store.update(heading_ki=round(msg.get("data", 0.0), 1))
+
+
+def on_heading_kd(msg: dict):
+    """Store heading kd gain."""
+    store.update(heading_kd=round(msg.get("data", 0.0), 1))
 
 
 def _update_current_grid_label():
@@ -409,6 +473,17 @@ app.add_middleware(
 
 app.include_router(router)
 app.add_api_websocket_route("/ws", ws_endpoint)
+
+
+@app.get("/api/video/snapshot")
+async def video_snapshot():
+    """Return the latest camera frame as a single JPEG image."""
+    from fastapi.responses import Response
+
+    if store.latest_frame is None:
+        return Response(status_code=204)
+
+    return Response(content=store.latest_frame, media_type="image/jpeg")
 
 
 @app.get("/api/video/stream")

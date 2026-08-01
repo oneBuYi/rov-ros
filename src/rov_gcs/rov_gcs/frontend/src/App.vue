@@ -41,11 +41,9 @@
       </div>
       <div class="hud-mid-left">
         <div class="gauges-row">
-          <DepthGauge
+          <GaugesPanel
             :depth="store.telemetry.depth"
             :target-depth="store.telemetry.target_depth"
-          />
-          <HeadingGauge
             :heading="store.telemetry.yaw"
             :target-heading="store.telemetry.target_heading"
           />
@@ -89,8 +87,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import StatusBar from './components/StatusBar.vue'
-import DepthGauge from './components/DepthGauge.vue'
-import HeadingGauge from './components/HeadingGauge.vue'
+import GaugesPanel from './components/GaugesPanel.vue'
 import TelemetryPanel from './components/TelemetryPanel.vue'
 import ControlPanel from './components/ControlPanel.vue'
 import VirtualJoystick from './components/VirtualJoystick.vue'
