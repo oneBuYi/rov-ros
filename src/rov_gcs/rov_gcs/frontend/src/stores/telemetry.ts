@@ -23,6 +23,8 @@ export interface Telemetry {
   grid_current_col: number
   grid_target_row: number
   grid_target_col: number
+  target_dist: number
+  target_depth_err: number
   gain_level: number
   light_on: boolean
   depth_kp: number
@@ -56,6 +58,8 @@ export const useTelemetryStore = defineStore('telemetry', () => {
     grid_current_col: -1,
     grid_target_row: -1,
     grid_target_col: -1,
+    target_dist: 0,
+    target_depth_err: 0,
     gain_level: 50,
     light_on: false,
     depth_kp: 100.0,

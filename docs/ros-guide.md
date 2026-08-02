@@ -81,7 +81,7 @@ ros2 run rov_control adhesion_ctrl_node
 ros2 run rov_gcs gcs_backend
 
 # 网格监测节点（泳池网格定位）
-ros2 run rov_grid grid_monitor_node --ros-args -p grid_config:=src/rov_grid/config/pool_wall_grid.yaml
+ros2 run rov_grid grid_monitor_node --ros-args --params-file src/rov_grid/config/pool_wall_grid.yaml
 
 # 相机发布节点（MJPEG 直通，默认 /dev/video0 640x480 15fps）
 ros2 run rov_sensor camera_pub_node

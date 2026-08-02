@@ -3,6 +3,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.qos import qos_profile_sensor_data
 from std_msgs.msg import Float64, Bool, Int32
 from sensor_msgs.msg import NavSatFix
 from rov_msgs.srv import SetGridTarget
@@ -78,14 +79,14 @@ class GridMonitorNode(Node):
             NavSatFix,
             '/mavros/global_position/global',
             self._navsat_callback,
-            10,
+            qos_profile_sensor_data,
         )
 
         self._sub_rel_alt = self.create_subscription(
             Float64,
             '/mavros/global_position/rel_alt',
             self._rel_alt_callback,
-            10,
+            qos_profile_sensor_data,
         )
 
         # --- Publishers ---
@@ -109,6 +110,12 @@ class GridMonitorNode(Node):
         )
         self._pub_grid_cols = self.create_publisher(
             Int32, 'grid/cols', 10,
+        )
+        self._pub_target_dist = self.create_publisher(
+            Float64, 'grid/target_dist', 10,
+        )
+        self._pub_target_depth_err = self.create_publisher(
+            Float64, 'grid/target_depth_err', 10,
         )
 
         # --- Service ---
@@ -267,6 +274,12 @@ class GridMonitorNode(Node):
 
         msg.data = dist_ok and depth_ok
         self._pub_in_target.publish(msg)
+
+        # Publish distance and depth error for GCS display
+        self._pub_target_dist.publish(Float64(data=dist))
+        self._pub_target_depth_err.publish(
+            Float64(data=abs(self._current_depth - grid_depth))
+        )
 
     # ------------------------------------------------------------------
     # Service callback

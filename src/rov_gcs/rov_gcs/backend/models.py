@@ -24,6 +24,8 @@ class Telemetry(BaseModel):
     grid_current_col: int = -1      # current ROV cell col (-1 = none)
     grid_target_row: int = -1       # target cell row (-1 = none)
     grid_target_col: int = -1       # target cell col (-1 = none)
+    target_dist: float = 0.0        # horizontal distance to target grid (m)
+    target_depth_err: float = 0.0   # depth error to target grid (m)
     gain_level: int = 50            # motor gain level (percent)
     light_on: bool = False          # underwater light state
     # PID gains for depth control

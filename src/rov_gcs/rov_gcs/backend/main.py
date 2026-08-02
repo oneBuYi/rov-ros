@@ -119,6 +119,16 @@ async def _subscribe_all(rb: RosbridgeClient) -> None:
         "std_msgs/msg/Bool",
         on_grid_in_target,
     )
+    await rb.subscribe(
+        "/rov/grid/target_dist",
+        "std_msgs/msg/Float64",
+        on_grid_target_dist,
+    )
+    await rb.subscribe(
+        "/rov/grid/target_depth_err",
+        "std_msgs/msg/Float64",
+        on_grid_target_depth_err,
+    )
     # Depth PID gains
     await rb.subscribe(
         "/rov/depth_ctrl/pid_kp",
@@ -236,6 +246,16 @@ def on_grid_target_col(msg: dict):
 def on_grid_in_target(msg: dict):
     """/rov/grid/in_target -> grid reached status."""
     store.update(grid_reached=bool(msg.get("data", False)))
+
+
+def on_grid_target_dist(msg: dict):
+    """/rov/grid/target_dist -> horizontal distance to target (m)."""
+    store.update(target_dist=round(msg.get("data", 0.0), 3))
+
+
+def on_grid_target_depth_err(msg: dict):
+    """/rov/grid/target_depth_err -> depth error to target (m)."""
+    store.update(target_depth_err=round(msg.get("data", 0.0), 3))
 
 
 # ----- PID gain callbacks -----

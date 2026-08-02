@@ -20,6 +20,6 @@ rov/grid_monitor:
     grid_lons:   [109.9999624, 109.9999583, 109.9999468, 109.9999272, 109.9999233, 109.9999054]
     grid_depths: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
 
-    distance_threshold: 500
+    distance_threshold: 1
     depth_threshold: 1
     control_rate: 10.0
