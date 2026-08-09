@@ -42,3 +42,7 @@ tmp/
 
 # Misc
 *.log
+
+# Other
+docs/2026_控制理论与应用/
+docs/操作手册/材料/
