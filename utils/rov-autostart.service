@@ -1,0 +1,15 @@
+[Unit]
+Description=ROV Auto Start
+After=network.target
+
+[Service]
+Type=simple
+User=sunrise
+WorkingDirectory=/home/sunrise/rov-ros
+ExecStart=/bin/bash /home/sunrise/rov-ros/auto-start.sh
+Restart=always
+RestartSec=3
+Environment=HOME=/home/sunrise
+
+[Install]
+WantedBy=multi-user.target

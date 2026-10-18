@@ -28,7 +28,7 @@ class TelemetryStore:
 
     def snapshot(self) -> Telemetry:
         """Return a copy of current telemetry state."""
-        return self._telemetry.model_copy()
+        return self._telemetry.copy()
 
     async def register_client(self, ws: WebSocket) -> None:
         async with self._lock:
@@ -47,7 +47,7 @@ class TelemetryStore:
     async def broadcast(self) -> None:
         """Push current telemetry to all connected WebSocket clients."""
         dead: list[WebSocket] = []
-        data = self.snapshot().model_dump()
+        data = self.snapshot().dict()
         payload = {"type": "telemetry", "data": data}
         async with self._lock:
             clients = list(self._clients)
@@ -90,3 +90,48 @@ async def ws_endpoint(websocket: WebSocket):
         pass
     finally:
         await store.remove_client(websocket)
+
+
+# ===== 相机直连订阅（绕过 rosbridge，降低视频延迟） =====
+import threading
+
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
+from sensor_msgs.msg import CompressedImage
+
+_VIDEO_QOS = QoSProfile(
+    reliability=ReliabilityPolicy.BEST_EFFORT,
+    history=HistoryPolicy.KEEP_LAST,
+    depth=1,
+)
+
+
+class CameraSubscriber(Node):
+    """直连订阅相机话题，缓存最新帧供 /api/video/stream 使用。"""
+
+    def __init__(self, store):
+        super().__init__('gcs_camera_sub')
+        self._store = store
+        self.create_subscription(
+            CompressedImage,
+            '/rov/camera/image_raw/compressed',
+            self._on_frame,
+            _VIDEO_QOS,
+        )
+
+    def _on_frame(self, msg):
+        self._store.latest_frame = bytes(msg.data)
+        self._store.frame_event.set()
+
+
+_camera_node = None
+
+
+def start_camera_subscriber(store):
+    global _camera_node
+    if not rclpy.ok():
+        rclpy.init()
+    _camera_node = CameraSubscriber(store)
+    threading.Thread(target=rclpy.spin, args=(_camera_node,),
+                     daemon=True).start()

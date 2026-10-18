@@ -17,13 +17,15 @@ from fastapi.staticfiles import StaticFiles
 
 from .rosbridge import RosbridgeClient
 from .routes import router
-from .telemetry import store, ws_endpoint
+from .telemetry import store, ws_endpoint, start_camera_subscriber
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger("gcs_backend")
+# 相机直连订阅（绕过 rosbridge，大幅降低视频延迟）
+start_camera_subscriber(store)
 
 # Global rosbridge client reference
 _rosbridge: Optional[RosbridgeClient] = None
@@ -78,11 +80,11 @@ async def _subscribe_all(rb: RosbridgeClient) -> None:
         "mavros_msgs/msg/State",
         on_mavros_state,
     )
-    await rb.subscribe(
-        "/rov/camera/image_raw/compressed",
-        "sensor_msgs/msg/CompressedImage",
-        on_camera_image,
-    )
+#     await rb.subscribe(
+#         "/rov/camera/image_raw/compressed",
+#         "sensor_msgs/msg/CompressedImage",
+#         on_camera_image,
+#     )
     # Grid topics
     await rb.subscribe(
         "/rov/grid/rows",
@@ -479,9 +481,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="ROV GCS Backend",
     version="0.1.0",
-    lifespan=lifespan,
+    
 )
-
+app.router.lifespan_context = lifespan
 # CORS: allow browser from any origin (for development convenience)
 app.add_middleware(
     CORSMiddleware,

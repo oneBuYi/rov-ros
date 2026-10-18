@@ -65,7 +65,7 @@ def generate_launch_description():
         executable='ugps_bridge_node',
         parameters=[{
             'udp_port': 52120,
-            'uart_port': '/dev/ttyTHS1',
+            'uart_port': '/dev/ttyS1',
             'baudrate': 38400,
             'target_device_id': '019496',
             'poll_rate': 100.0,

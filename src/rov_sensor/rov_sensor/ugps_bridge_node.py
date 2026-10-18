@@ -1,3 +1,4 @@
+
 """
 UGPS 桥接节点：通过 UDP 接收 NMEA 语句，
 按设备 ID 过滤、过滤零坐标、转换专有前缀为通用 NMEA 前缀，
@@ -88,7 +89,7 @@ class UgpsBridgeNode(Node):
             namespace='',
             parameters=[
                 ('udp_port', 52120),
-                ('uart_port', '/dev/ttyTHS1'),
+                ('uart_port', '/dev/ttyS1'),
                 ('baudrate', 38400),
                 ('target_device_id', '019496'),
                 ('poll_rate', 100.0),

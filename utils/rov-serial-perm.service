@@ -1,0 +1,11 @@
+[Unit]
+Description=Set serial port permission for ROV
+After=dev-ttyS2.device
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/rov_serial_perm.sh
+
+[Install]
+WantedBy=multi-user.target
+
